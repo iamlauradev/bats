@@ -64,7 +64,7 @@ app.secret_key = _secret
 # SameSite=Lax: protección adicional contra CSRF cross-site
 # PERMANENT_SESSION_LIFETIME: la sesión expira tras 2 h de inactividad
 from datetime import timedelta
-_secure_cookie = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() != 'false'
+_secure_cookie = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() not in ('false', '0', '')
 app.config.update(
     SESSION_COOKIE_SECURE   = _secure_cookie,
     SESSION_COOKIE_HTTPONLY = True,

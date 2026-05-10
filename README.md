@@ -187,7 +187,7 @@ En el primer arranque, si no hay ningún usuario en la base de datos, el sistema
 | `MYSQL_USER` / `MYSQL_PASSWORD` | Usuario de la aplicación | `asistenciator_app` |
 | `FLASK_SECRET_KEY` | Clave secreta Flask (mínimo 32 chars) | `python3 -c "import secrets; print(secrets.token_urlsafe(32))"` |
 | `SCHEDULER_KEY` | Clave para autenticar al scheduler | igual que arriba |
-| `SESSION_COOKIE_SECURE` | `true` (defecto) para HTTPS/Cloudflare; `false` para acceso directo por IP local cuando el túnel esté caído | `true` |
+| `SESSION_COOKIE_SECURE` | `false` (defecto). Cloudflare ya fuerza HTTPS en el navegador. Poner `true` solo si Flask sirve HTTPS directamente sin Cloudflare | `false` |
 | `TELEGRAM_TOKEN` | Token del bot de Telegram | obtenido en @BotFather |
 | `TELEGRAM_CHAT_ID` | ID del chat destino | obtenido con `/getUpdates` |
 | `EMAIL_USER` / `EMAIL_PASSWORD` | Gmail + contraseña de aplicación | |
