@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración del Sistema — Asistenciator{% endblock %}
+{% block page_title %}Configuración del Sistema{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:var(--tx0);">
+            <i class="bi bi-sliders me-2" style="color:var(--acc);"></i>
+            Configuración General
+        </h2>
+        <p style="font-size:13px;color:var(--tx1);margin:4px 0 0;">
+            Parámetros del sistema editables sin tocar el servidor.
+        </p>
+    </div>
+</div>
+
+<form action="{{ url_for('guardar_configuracion') }}" method="POST">
+<div class="row g-4">
+
+    {# ── Bloque: Horario de escaneo ── #}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body" style="padding:24px 28px;">
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:44px;height:44px;border-radius:11px;
+                                background:var(--acc-soft);display:flex;
+                                align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-clock-history"
+                           style="font-size:1.3rem;color:var(--acc);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Horario de escaneo
+                        </div>
+                        <div style="font-size:13px;color:var(--tx1);">
+                            Define cuándo el sistema escanea automáticamente.
+                            Fuera de estas ventanas no se registran ausencias ni
+                            se envían notificaciones — ni siquiera con el botón
+                            "Pasar lista".
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    {# ── Mañana ── #}
+                    <div class="col-md-6">
+                        <div style="background:var(--bg2);border:1px solid var(--border);
+                                    border-radius:10px;padding:14px 16px;height:100%;">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox"
+                                       role="switch"
+                                       name="escaneo_manana_activo"
+                                       id="sw_manana"
+                                       {% if cfg.escaneo_manana_activo == 'true' %}checked{% endif %}>
+                                <label class="form-check-label"
+                                       for="sw_manana"
+                                       style="font-size:14px;font-weight:700;color:var(--tx0);
+                                              text-transform:none;letter-spacing:0;">
+                                    <i class="bi bi-sunrise me-1" style="color:#fbbf24;"></i>
+                                    Turno de mañana
+                                </label>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label">Inicio</label>
+                                    <input type="time"
+                                           name="escaneo_manana_inicio"
+                                           class="form-control form-control-sm"
+                                           value="{{ cfg.escaneo_manana_inicio }}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Fin</label>
+                                    <input type="time"
+                                           name="escaneo_manana_fin"
+                                           class="form-control form-control-sm"
+                                           value="{{ cfg.escaneo_manana_fin }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Tarde ── #}
+                    <div class="col-md-6">
+                        <div style="background:var(--bg2);border:1px solid var(--border);
+                                    border-radius:10px;padding:14px 16px;height:100%;">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox"
+                                       role="switch"
+                                       name="escaneo_tarde_activo"
+                                       id="sw_tarde"
+                                       {% if cfg.escaneo_tarde_activo == 'true' %}checked{% endif %}>
+                                <label class="form-check-label"
+                                       for="sw_tarde"
+                                       style="font-size:14px;font-weight:700;color:var(--tx0);
+                                              text-transform:none;letter-spacing:0;">
+                                    <i class="bi bi-sunset me-1" style="color:#a78bfa;"></i>
+                                    Turno de tarde
+                                </label>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label">Inicio</label>
+                                    <input type="time"
+                                           name="escaneo_tarde_inicio"
+                                           class="form-control form-control-sm"
+                                           value="{{ cfg.escaneo_tarde_inicio }}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Fin</label>
+                                    <input type="time"
+                                           name="escaneo_tarde_fin"
+                                           class="form-control form-control-sm"
+                                           value="{{ cfg.escaneo_tarde_fin }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ── Frecuencia ── #}
+                    <div class="col-12">
+                        <div style="background:var(--acc-soft);border:1px solid var(--acc-border);
+                                    border-radius:10px;padding:14px 18px;
+                                    display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                            <i class="bi bi-stopwatch"
+                               style="font-size:1.3rem;color:var(--acc);"></i>
+                            <div style="flex:1;min-width:240px;">
+                                <div style="font-size:13px;font-weight:700;color:var(--tx0);">
+                                    Frecuencia de escaneo automático
+                                </div>
+                                <div style="font-size:12px;color:var(--tx1);">
+                                    Cada cuántos minutos el cron lanza un escaneo dentro
+                                    de las ventanas activas. Útil para acelerar demos
+                                    o presentaciones.
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <input type="number"
+                                       name="escaneo_frecuencia_min"
+                                       class="form-control"
+                                       min="1" max="240" step="1"
+                                       value="{{ cfg.escaneo_frecuencia_min }}"
+                                       style="width:90px;">
+                                <span style="font-size:13px;font-weight:600;color:var(--tx1);">
+                                    minutos
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {# ── Bloque: Recreos ── #}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body" style="padding:24px 28px;">
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:44px;height:44px;border-radius:11px;
+                                background:var(--warning-bg);display:flex;
+                                align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-cup-hot-fill"
+                           style="font-size:1.3rem;color:var(--warning-tx);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Franjas de recreo
+                        </div>
+                        <div style="font-size:13px;color:var(--tx1);">
+                            Durante estos intervalos el escaneo automático queda suspendido.
+                            Deja el campo vacío para desactivar ese recreo.
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Recreo de mañana ── #}
+                <p style="font-size:12px;font-weight:700;text-transform:uppercase;
+                           letter-spacing:.07em;color:var(--tx2);margin:0 0 10px;">
+                    <i class="bi bi-sunrise me-1" style="color:#fbbf24;"></i>Recreo de mañana
+                </p>
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-5 col-md-4">
+                        <label class="form-label">Hora de inicio</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock"
+                               style="position:absolute;left:13px;top:50%;transform:translateY(-50%);
+                                      color:var(--tx2);font-size:14px;pointer-events:none;"></i>
+                            <input type="time" name="recreo_inicio"
+                                   class="form-control"
+                                   value="{{ cfg.recreo_inicio }}"
+                                   style="padding-left:38px;">
+                        </div>
+                    </div>
+                    <div class="col-sm-5 col-md-4">
+                        <label class="form-label">Hora de fin</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock-fill"
+                               style="position:absolute;left:13px;top:50%;transform:translateY(-50%);
+                                      color:var(--tx2);font-size:14px;pointer-events:none;"></i>
+                            <input type="time" name="recreo_fin"
+                                   class="form-control"
+                                   value="{{ cfg.recreo_fin }}"
+                                   style="padding-left:38px;">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 d-flex align-items-end">
+                        <div style="background:var(--warning-bg);border:1px solid var(--warning-tx);
+                                    border-radius:10px;padding:10px 16px;width:100%;
+                                    font-size:13px;color:var(--warning-tx);font-weight:600;">
+                            <i class="bi bi-pause-circle me-2"></i>
+                            Sin escanear de
+                            <span id="prev-inicio">{{ cfg.recreo_inicio or '—' }}</span>
+                            a
+                            <span id="prev-fin">{{ cfg.recreo_fin or '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Recreo de tarde ── #}
+                <p style="font-size:12px;font-weight:700;text-transform:uppercase;
+                           letter-spacing:.07em;color:var(--tx2);margin:0 0 10px;">
+                    <i class="bi bi-sunset me-1" style="color:#a78bfa;"></i>Recreo de tarde
+                </p>
+                <div class="row g-3">
+                    <div class="col-sm-5 col-md-4">
+                        <label class="form-label">Hora de inicio</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock"
+                               style="position:absolute;left:13px;top:50%;transform:translateY(-50%);
+                                      color:var(--tx2);font-size:14px;pointer-events:none;"></i>
+                            <input type="time" name="recreo_tarde_inicio"
+                                   class="form-control"
+                                   value="{{ cfg.recreo_tarde_inicio }}"
+                                   style="padding-left:38px;">
+                        </div>
+                    </div>
+                    <div class="col-sm-5 col-md-4">
+                        <label class="form-label">Hora de fin</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock-fill"
+                               style="position:absolute;left:13px;top:50%;transform:translateY(-50%);
+                                      color:var(--tx2);font-size:14px;pointer-events:none;"></i>
+                            <input type="time" name="recreo_tarde_fin"
+                                   class="form-control"
+                                   value="{{ cfg.recreo_tarde_fin }}"
+                                   style="padding-left:38px;">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 d-flex align-items-end">
+                        <div style="background:var(--warning-bg);border:1px solid var(--warning-tx);
+                                    border-radius:10px;padding:10px 16px;width:100%;
+                                    font-size:13px;color:var(--warning-tx);font-weight:600;">
+                            <i class="bi bi-pause-circle me-2"></i>
+                            Sin escanear de
+                            <span id="prev-tarde-inicio">{{ cfg.recreo_tarde_inicio or '—' }}</span>
+                            a
+                            <span id="prev-tarde-fin">{{ cfg.recreo_tarde_fin or '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {# ── Bloque: Info del centro (editable por admin) ── #}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body" style="padding:24px 28px;">
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:44px;height:44px;border-radius:11px;
+                                background:var(--acc-soft);display:flex;
+                                align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-building"
+                           style="font-size:1.3rem;color:var(--acc);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Información del centro
+                        </div>
+                        <div style="font-size:13px;color:var(--tx1);">
+                            El nombre del centro aparece en las cabeceras de los informes semanales.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label">Nombre del centro</label>
+                        {% if current_user.es_admin %}
+                        <input type="text" name="nombre_centro" class="form-control"
+                               value="{{ cfg.nombre_centro }}"
+                               placeholder="Ej: IES García Lorca">
+                        <div class="form-text">
+                            Se guarda en la base de datos. No es necesario reiniciar el servidor.
+                        </div>
+                        {% else %}
+                        <input type="text" class="form-control"
+                               value="{{ cfg.nombre_centro or '(no configurado)' }}"
+                               disabled
+                               style="opacity:.6;cursor:not-allowed;">
+                        <div class="form-text">Solo los administradores pueden editar este valor.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {# ── Bloque: Estado actual del sistema (solo lectura) ── #}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body" style="padding:24px 28px;">
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:44px;height:44px;border-radius:11px;
+                                background:var(--success-bg);display:flex;
+                                align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-activity"
+                           style="font-size:1.3rem;color:var(--success-tx);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Estado del sistema
+                        </div>
+                        <div style="font-size:13px;color:var(--tx1);">
+                            Referencia rápida sobre cómo funciona el escaneo automático.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+                             gap:12px;">
+
+                    <div style="background:var(--bg2);border:1px solid var(--border);
+                                border-radius:10px;padding:14px 16px;">
+                        <div style="font-size:11px;text-transform:uppercase;
+                                    letter-spacing:.06em;color:var(--tx2);
+                                    font-weight:700;margin-bottom:6px;">
+                            Frecuencia de escaneo
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Cada {{ cfg.escaneo_frecuencia_min }} minuto{{ '' if cfg.escaneo_frecuencia_min == '1' else 's' }}
+                        </div>
+                        <div style="font-size:12px;color:var(--tx1);margin-top:2px;">
+                            Lunes a viernes, dentro de las ventanas activas
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg2);border:1px solid var(--border);
+                                border-radius:10px;padding:14px 16px;">
+                        <div style="font-size:11px;text-transform:uppercase;
+                                    letter-spacing:.06em;color:var(--tx2);
+                                    font-weight:700;margin-bottom:6px;">
+                            Recreos configurados
+                        </div>
+                        <div style="font-size:14px;font-weight:700;color:var(--warning-tx);">
+                            <i class="bi bi-sunrise me-1" style="font-size:12px;color:#fbbf24;"></i>
+                            {{ cfg.recreo_inicio or '—' }} – {{ cfg.recreo_fin or '—' }}
+                        </div>
+                        <div style="font-size:14px;font-weight:700;color:var(--warning-tx);margin-top:4px;">
+                            <i class="bi bi-sunset me-1" style="font-size:12px;color:#a78bfa;"></i>
+                            {{ cfg.recreo_tarde_inicio or '—' }} – {{ cfg.recreo_tarde_fin or '—' }}
+                        </div>
+                        <div style="font-size:12px;color:var(--tx1);margin-top:4px;">
+                            Sin escaneo en estos intervalos
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg2);border:1px solid var(--border);
+                                border-radius:10px;padding:14px 16px;">
+                        <div style="font-size:11px;text-transform:uppercase;
+                                    letter-spacing:.06em;color:var(--tx2);
+                                    font-weight:700;margin-bottom:6px;">
+                            Notificación de cortesía
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            2 escaneos ausente
+                        </div>
+                        <div style="font-size:12px;color:var(--tx1);margin-top:2px;">
+                            Se notifica al 2º escaneo consecutivo ausente
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg2);border:1px solid var(--border);
+                                border-radius:10px;padding:14px 16px;">
+                        <div style="font-size:11px;text-transform:uppercase;
+                                    letter-spacing:.06em;color:var(--tx2);
+                                    font-weight:700;margin-bottom:6px;">
+                            Informes semanales
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:var(--tx0);">
+                            Lunes 00:01
+                        </div>
+                        <div style="font-size:12px;color:var(--tx1);margin-top:2px;">
+                            Generados automáticamente por el scheduler
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# Botón guardar fijo al fondo #}
+<div style="margin-top:28px;display:flex;justify-content:flex-end;gap:12px;">
+    <a href="{{ url_for('index') }}"
+       style="background:transparent;border:1px solid var(--border);
+              color:var(--tx1);padding:11px 22px;border-radius:10px;
+              font-size:14px;font-weight:600;text-decoration:none;
+              display:inline-flex;align-items:center;gap:7px;">
+        Cancelar
+    </a>
+    <button type="submit" class="btn-scan">
+        <i class="bi bi-check-lg"></i> Guardar configuración
+    </button>
+</div>
+
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* Preview en tiempo real de las franjas de recreo */
+const previewMap = [
+    { ini: 'recreo_inicio',       fin: 'recreo_fin',
+      elIni: 'prev-inicio',       elFin: 'prev-fin' },
+    { ini: 'recreo_tarde_inicio', fin: 'recreo_tarde_fin',
+      elIni: 'prev-tarde-inicio', elFin: 'prev-tarde-fin' },
+];
+
+previewMap.forEach(({ ini, fin, elIni, elFin }) => {
+    const inpI  = document.querySelector(`input[name="${ini}"]`);
+    const inpF  = document.querySelector(`input[name="${fin}"]`);
+    const elI   = document.getElementById(elIni);
+    const elF   = document.getElementById(elFin);
+    const upd   = () => {
+        if (elI) elI.textContent = inpI?.value || '—';
+        if (elF) elF.textContent = inpF?.value || '—';
+    };
+    inpI?.addEventListener('input', upd);
+    inpF?.addEventListener('input', upd);
+});
+</script>
+{% endblock %}

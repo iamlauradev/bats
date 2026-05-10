@@ -1,0 +1,25 @@
+# =============================================================================
+# ASISTENCIATOR IoT — Crontab del scheduler v2.5
+# =============================================================================
+#
+# Lunes–viernes: heartbeat de escaneo cada minuto (07:00–22:59).
+# El gating real (ventanas mañana/tarde + frecuencia + recreos) lo hace
+# la app vía /estado-franja. Este cron solo sirve de heartbeat; los
+# minutos en los que no toca escanear se descartan silenciosamente.
+#
+# Fin de semana: el sistema queda en reposo. No se realiza ningún escaneo
+# ni tarea automática. El escaneo manual en la UI también queda bloqueado.
+#
+# Tareas de fin de semana (viernes 23:59):
+#   1. Generación del informe semanal (cubre lunes–viernes de la semana actual)
+#   2. Purga de los registros de asistencia de la semana
+#
+# =============================================================================
+
+# Escaneo — lunes a viernes, 07:00–22:59, cada minuto
+* 7-22 * * 1-5 /scheduler/escaneo.sh >> /var/log/asistenciator/cron.log 2>&1
+
+# Informe + purga semanal — viernes a las 23:59
+59 23 * * 5 /scheduler/informe.sh >> /var/log/asistenciator/informe.log 2>&1
+
+# Línea en blanco (requerida por crond)

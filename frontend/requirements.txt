@@ -1,0 +1,32 @@
+# =============================================================================
+# ASISTENCIATOR IoT — Dependencias Python v1.0
+# =============================================================================
+# Instalar dentro del contenedor Docker: pip install -r requirements.txt
+# Para desarrollo local: pip install -r requirements.txt --break-system-packages
+# =============================================================================
+
+# Framework web
+Flask==3.0.3
+
+# Autenticación y sesiones
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+
+# Rate limiting (protección brute-force en /login)
+Flask-Limiter==3.5.0
+
+# Conector MariaDB
+PyMySQL==1.1.1
+
+# Peticiones HTTP (API Telegram)
+requests==2.31.0
+
+# BLE pasivo — métodos 4, 5 y 6
+bleak==0.22.2
+
+# PyBluez (Bluetooth clásico — métodos 2 y 6)
+# Requiere libbluetooth-dev en el sistema. Instalar desde fuente:
+git+https://github.com/pybluez/pybluez.git
+
+# Proxy fix para Cloudflare Tunnel (cabeceras X-Forwarded-*)
+Werkzeug>=3.0.0

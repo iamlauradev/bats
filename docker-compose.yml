@@ -1,0 +1,118 @@
+# =============================================================================
+# ASISTENCIATOR IoT — Docker Compose v1.0
+# =============================================================================
+#
+# Servicios:
+#   db          → MariaDB 10.11
+#   web         → Flask (servidor web + lógica Bluetooth)
+#   scheduler   → Alpine + crond (escaneo automático cada 10 minutos)
+#   cloudflared → Cloudflare Tunnel (expone Flask al exterior con HTTPS real)
+#
+# Nginx eliminado: Cloudflare termina el SSL y hace de proxy.
+# Flask sigue escuchando solo en localhost:5000 — no está expuesto al exterior.
+#
+# Primer arranque:
+#   1. Crea el túnel en https://one.dash.cloudflare.com → Networks → Tunnels
+#   2. Copia el token del túnel en .env como CLOUDFLARE_TUNNEL_TOKEN
+#   3. cp .env.example .env  (y rellena todas las claves)
+#   4. docker compose up -d
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # BASE DE DATOS
+  # ---------------------------------------------------------------------------
+  db:
+    image: mariadb:10.11
+    container_name: asistenciator_db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"    # Solo accesible desde localhost
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      MYSQL_USER:          ${MYSQL_USER}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
+      TZ:                  ${TZ}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./db/mariadb_data:/var/lib/mysql
+      - ./db/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # ---------------------------------------------------------------------------
+  # SERVIDOR WEB FLASK
+  # Escucha en 127.0.0.1:5000 — solo cloudflared se conecta a él.
+  # network_mode:host necesario para Bluetooth y para que cloudflared
+  # pueda alcanzar localhost:5000 del host.
+  # ---------------------------------------------------------------------------
+  web:
+    build: ./frontend
+    container_name: asistenciator_web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST:          127.0.0.1
+      DB_NAME:          ${MYSQL_DATABASE}
+      DB_USER:          ${MYSQL_USER}
+      DB_PASSWORD:      ${MYSQL_PASSWORD}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+      SCHEDULER_KEY:    ${SCHEDULER_KEY}
+      TELEGRAM_TOKEN:   ${TELEGRAM_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      EMAIL_HOST:       ${EMAIL_HOST}
+      EMAIL_PORT:       ${EMAIL_PORT}
+      EMAIL_USER:       ${EMAIL_USER}
+      EMAIL_PASSWORD:   ${EMAIL_PASSWORD}
+      EMAIL_FROM:       ${EMAIL_FROM}
+      NOMBRE_CENTRO:    ${NOMBRE_CENTRO}
+      TZ:               ${TZ}
+    network_mode: "host"
+    privileged: true
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app
+      - ./poc:/poc
+      - /var/run/dbus:/var/run/dbus
+      - ./logs:/var/log/asistenciator
+
+  # ---------------------------------------------------------------------------
+  # SCHEDULER
+  # ---------------------------------------------------------------------------
+  scheduler:
+    build: ./scheduler
+    container_name: asistenciator_scheduler
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      TZ:            ${TZ}
+      SCHEDULER_KEY: ${SCHEDULER_KEY}
+    depends_on:
+      - web
+    volumes:
+      - ./logs:/var/log/asistenciator
+
+  # ---------------------------------------------------------------------------
+  # CLOUDFLARE TUNNEL
+  # Conecta la RPi con Cloudflare sin abrir ningún puerto en el router.
+  # El token se obtiene en: one.dash.cloudflare.com → Networks → Tunnels
+  # Apunta a http://localhost:5000 (Flask) desde el dashboard de Cloudflare.
+  # ---------------------------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: asistenciator_cloudflared
+    restart: unless-stopped
+    network_mode: "host"    # Necesario para alcanzar localhost:5000 de Flask
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - web

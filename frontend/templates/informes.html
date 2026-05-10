@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Informes Semanales — Asistenciator{% endblock %}
+{% block page_title %}Informes Semanales{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     CABECERA
+============================================================ -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:#0f172a;">
+            <i class="bi bi-bar-chart-line-fill me-2" style="color:var(--accent);"></i>
+            Informes Semanales
+        </h2>
+        <p style="font-size:0.8rem;color:#94a3b8;margin:4px 0 0;">
+            Generados automáticamente cada lunes. Incluyen el resumen de
+            asistencia y faltas de la semana anterior.
+        </p>
+    </div>
+
+    <!-- Botón generar ahora (solo admin) -->
+    {% if current_user.es_admin %}
+    <button class="btn-scan" onclick="generarInforme()">
+        <i class="bi bi-plus-circle" id="iconoGenerar"></i>
+        <span id="textoGenerar">Generar informe ahora</span>
+    </button>
+    {% endif %}
+</div>
+
+
+<!-- ============================================================
+     TABLA DE INFORMES
+============================================================ -->
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Semana</th>
+                    <th class="d-none d-md-table-cell">Generado el</th>
+                    <th style="text-align:right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% if informes %}
+                    {% for informe in informes %}
+                    <tr>
+                        <!-- Rango de la semana -->
+                        <td>
+                            <div style="font-weight:600;color:#1e293b;font-size:0.875rem;">
+                                <i class="bi bi-calendar-week me-2"
+                                   style="color:var(--accent);"></i>
+                                {{ informe.semana_inicio.strftime('%d/%m/%Y') }}
+                                —
+                                {{ informe.semana_fin.strftime('%d/%m/%Y') }}
+                            </div>
+                        </td>
+
+                        <!-- Fecha de generación -->
+                        <td class="d-none d-md-table-cell"
+                            style="color:#64748b;font-size:0.83rem;">
+                            {{ informe.generado_en.strftime('%d/%m/%Y a las %H:%M') }}
+                        </td>
+
+                        <!-- Acciones -->
+                        <td style="text-align:right;">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <!-- Ver en el navegador -->
+                                <a href="{{ url_for('ver_informe', id_informe=informe.id_informe) }}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary"
+                                   style="border-radius:7px;font-size:0.8rem;">
+                                    <i class="bi bi-eye me-1"></i>Ver
+                                </a>
+
+                                <!-- Descargar -->
+                                <a href="{{ url_for('descargar_informe', id_informe=informe.id_informe) }}"
+                                   class="btn-export"
+                                   style="padding:6px 14px;font-size:0.8rem;">
+                                    <i class="bi bi-download me-1"></i>Descargar
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                {% else %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">
+                                <i class="bi bi-bar-chart-line"></i>
+                                <p>
+                                    <strong>No hay informes generados todavía.</strong><br>
+                                    Los informes se generan automáticamente cada lunes.<br>
+                                    {% if current_user.es_admin %}
+                                    También puedes generarlo ahora manualmente con el
+                                    botón de arriba.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/**
+ * Genera el informe de la semana actual manualmente.
+ * Solo disponible para administradores.
+ */
+function generarInforme() {
+    if (!confirm(
+        '¿Generar el informe de la semana actual?\n\n' +
+        'Esto resumirá los registros de esta semana y los eliminará de la BD.'
+    )) return;
+
+    const icono = document.getElementById('iconoGenerar');
+    const texto = document.getElementById('textoGenerar');
+
+    icono.outerHTML = '<div class="spinner" id="iconoGenerar"></div>';
+    texto.textContent = 'Generando…';
+
+    fetch('{{ url_for("generar_informe_manual") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                window.location.reload();
+            } else {
+                alert('⚠️ ' + data.mensaje);
+                window.location.reload();
+            }
+        })
+        .catch(() => {
+            alert('⚠️ Error de conexión con el servidor.');
+            window.location.reload();
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios — Asistenciator{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:var(--tx0);">
+            <i class="bi bi-shield-lock-fill me-2" style="color:var(--acc);"></i>
+            Usuarios del Sistema
+        </h2>
+        <p style="font-size:13px;color:var(--tx1);margin:4px 0 0;">
+            Gestión de cuentas de acceso al panel web.
+        </p>
+    </div>
+    <button class="btn-scan" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
+        <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width:48px;"></th>
+                    <th>Nombre</th>
+                    <th class="d-none d-md-table-cell">Email</th>
+                    <th>Rol</th>
+                    <th class="d-none d-lg-table-cell">Creado</th>
+                    <th style="text-align:right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if usuarios %}
+                    {% for u in usuarios %}
+                    <tr class="{{ 'opacity-50' if not u.activo else '' }}">
+                        <td>
+                            <div class="student-avatar"
+                                 style="background:{{ u.nombre | color_avatar }};">
+                                {{ u.nombre | iniciales }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="student-name">{{ u.nombre }}</span>
+                            {% if not u.activo %}
+                                <span class="badge-sin-datos ms-1" style="font-size:11px;">inactivo</span>
+                            {% endif %}
+                            {% if u.id_usuario == current_user.id %}
+                                <span style="font-size:11px;color:var(--tx2);margin-left:4px;">(tú)</span>
+                            {% endif %}
+                            <div class="d-md-none mt-1" style="font-size:12px;color:var(--tx1);">{{ u.email }}</div>
+                        </td>
+                        <td class="d-none d-md-table-cell" style="color:var(--tx1);font-size:13px;">{{ u.email }}</td>
+                        <td>
+                            {% if u.rol == 'admin' %}
+                                <span class="badge-presente" style="font-size:12px;">
+                                    <i class="bi bi-shield-fill me-1"></i>{{ roles[u.rol] }}
+                                </span>
+                            {% elif u.rol == 'tutor' %}
+                                <span style="background:rgba(3,105,161,0.15);color:#38bdf8;padding:5px 12px;
+                                             border-radius:20px;font-size:12px;font-weight:700;">
+                                    <i class="bi bi-person-badge me-1"></i>{{ roles[u.rol] }}
+                                </span>
+                            {% else %}
+                                <span style="background:var(--success-bg);color:var(--success-tx);
+                                             padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+                                    <i class="bi bi-person-fill me-1"></i>{{ roles[u.rol] }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell" style="color:var(--tx2);font-size:13px;">{{ u.creado_en }}</td>
+                        <td style="text-align:right;">
+                            <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                <!-- Editar datos -->
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditarUsuario{{ u.id_usuario }}"
+                                        style="border-radius:7px;font-size:12px;border-color:var(--border);color:var(--tx1);">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+
+                                <!-- Cambiar contraseña -->
+                                <button class="btn btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalPassword{{ u.id_usuario }}"
+                                        style="border-radius:7px;font-size:12px;border:1px solid var(--acc-border);color:var(--acc);background:transparent;">
+                                    <i class="bi bi-key me-1"></i>Contraseña
+                                </button>
+
+                                {% if u.id_usuario != current_user.id %}
+                                <form action="{{ url_for('toggle_usuario', id_usuario=u.id_usuario) }}"
+                                      method="POST" class="d-inline">
+                                    <button type="submit"
+                                            class="btn btn-sm {{ 'btn-outline-success' if not u.activo else 'btn-outline-warning' }}"
+                                            style="border-radius:7px;font-size:12px;"
+                                            title="{{ 'Activar' if not u.activo else 'Desactivar' }}">
+                                        <i class="bi {{ 'bi-person-check' if not u.activo else 'bi-person-dash' }}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('delete_usuario', id_usuario=u.id_usuario) }}"
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirmarBorradoUsuario('{{ u.nombre | replace("'", "\\'") }}');">
+                                    <button type="submit" class="btn btn-sm"
+                                            style="border-radius:7px;font-size:12px;
+                                                   border:1px solid var(--danger-tx);
+                                                   color:var(--danger-tx);background:transparent;"
+                                            title="Borrar permanentemente">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="bi bi-people"></i>
+                                <p><strong>No hay usuarios registrados.</strong></p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODALES DE EDICIÓN (nombre, email, rol)
+============================================================ -->
+{% for u in usuarios %}
+<div class="modal fade" id="modalEditarUsuario{{ u.id_usuario }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="student-avatar" style="background:{{ u.nombre | color_avatar }};">
+                        {{ u.nombre | iniciales }}
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" style="font-size:15px;color:var(--tx0);">Editar usuario</h5>
+                        <p class="mb-0" style="font-size:12px;color:var(--tx1);">{{ u.nombre }}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('edit_usuario', id_usuario=u.id_usuario) }}" method="POST">
+                <div class="modal-body" style="padding:20px 24px;">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre completo</label>
+                        <input type="text" name="nombre" class="form-control"
+                               value="{{ u.nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control"
+                               value="{{ u.email }}" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Rol</label>
+                        <select name="rol" class="form-select" required
+                                {% if u.id_usuario == current_user.id %}disabled{% endif %}>
+                            {% for clave, etiqueta in roles.items() %}
+                            <option value="{{ clave }}" {{ 'selected' if u.rol == clave else '' }}>
+                                {{ etiqueta }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if u.id_usuario == current_user.id %}
+                        <div class="form-text">No puedes cambiar tu propio rol.</div>
+                        <!-- input oculto para que se envíe el rol actual -->
+                        <input type="hidden" name="rol" value="{{ u.rol }}">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:8px 18px;font-size:13px;">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<!-- ============================================================
+     MODALES DE CAMBIO DE CONTRASEÑA
+============================================================ -->
+{% for u in usuarios %}
+<div class="modal fade" id="modalPassword{{ u.id_usuario }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="font-size:15px;color:var(--tx0);">
+                    Cambiar contraseña — {{ u.nombre }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('cambiar_password') }}" method="POST">
+                <input type="hidden" name="id_usuario" value="{{ u.id_usuario }}">
+                <div class="modal-body" style="padding:20px 24px;">
+                    <div class="mb-3">
+                        <label class="form-label">Nueva contraseña</label>
+                        <input type="password" name="nueva_contrasena" class="form-control"
+                               required minlength="8" placeholder="Mínimo 8 caracteres">
+                    </div>
+                    <div>
+                        <label class="form-label">Confirmar contraseña</label>
+                        <input type="password" name="confirmacion" class="form-control"
+                               required minlength="8" placeholder="Repite la contraseña">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:8px 18px;font-size:13px;">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<!-- ============================================================
+     MODAL CREAR USUARIO
+============================================================ -->
+<div class="modal fade" id="modalCrearUsuario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"
+                 style="background:linear-gradient(135deg,var(--acc-dark),var(--acc));border:none;">
+                <h5 class="modal-title" style="font-size:15px;color:#fff;">
+                    <i class="bi bi-person-plus-fill me-2"></i>Nuevo Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_usuario') }}" method="POST">
+                <div class="modal-body" style="padding:20px 24px;">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nombre completo</label>
+                            <input type="text" name="nombre" class="form-control" required placeholder="Ej: Ana Martínez">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required placeholder="ana@centro.es">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" name="contrasena" class="form-control"
+                                   required minlength="8" placeholder="Mín. 8 caracteres">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Rol</label>
+                            <select name="rol" class="form-select" required>
+                                {% for clave, etiqueta in roles.items() %}
+                                <option value="{{ clave }}">{{ etiqueta }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:8px 18px;font-size:13px;">
+                        <i class="bi bi-plus-lg me-1"></i>Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+function confirmarBorradoUsuario(nombre) {
+    return confirm(
+        '¿Borrar permanentemente al usuario "' + nombre + '"?\n\n' +
+        'Esta acción no se puede deshacer. Si solo quieres impedirle el ' +
+        'acceso, usa el botón de desactivar.'
+    );
+}
+</script>
+{% endblock %}

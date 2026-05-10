@@ -1,0 +1,101 @@
+erDiagram
+    %% ==========================================================================
+    %% ASISTENCIATOR IoT — Diagrama E/R (v2.5)
+    %% Refleja el esquema real de MariaDB al cierre del proyecto.
+    %% ==========================================================================
+
+    USUARIOS {
+        int     id_usuario     PK
+        string  nombre
+        string  email          UK
+        string  password_hash
+        enum    rol            "admin | tutor | profesor"
+        boolean activo
+        datetime creado_en
+    }
+
+    ASIGNATURAS {
+        int    id_asignatura PK
+        string nombre
+    }
+
+    ASIGNATURA_PROFESORES {
+        int id            PK
+        int id_asignatura FK
+        int id_usuario    FK  "UK(id_asignatura, id_usuario)"
+    }
+
+    HORARIOS {
+        int     id_horario    PK
+        int     id_asignatura FK
+        tinyint dia_semana        "0=lun ... 4=vie"
+        time    hora_inicio
+        time    hora_fin
+        string  aula
+    }
+
+    ALUMNOS {
+        int     id_alumno     PK
+        string  nombre
+        string  apellidos
+        string  mac_bluetooth UK  "Opcional"
+        string  grupo
+        enum    turno             "manana | tarde | ambos"
+        string  email_tutor       "Opcional"
+        string  telefono_tutor    "Opcional"
+        boolean activo
+        datetime creado_en
+    }
+
+    MATRICULAS {
+        int id_matricula  PK
+        int id_alumno     FK
+        int id_asignatura FK      "UK(id_alumno, id_asignatura)"
+    }
+
+    ASISTENCIA {
+        int    id_registro PK
+        int    id_alumno   FK
+        int    id_horario  FK  "SET NULL si se borra el horario"
+        date   fecha
+        time   hora_registro
+        enum   estado          "PRESENTE | AUSENTE"
+    }
+
+    ESTADO_ALUMNO_DIA {
+        int      id             PK
+        int      id_alumno      FK
+        date     fecha             "UK(id_alumno, fecha)"
+        enum     estado_actual     "PRESENTE | AUSENTE"
+        boolean  notificado
+        datetime ultima_actualizacion
+    }
+
+    CONFIGURACION {
+        int    id_config PK
+        string clave     UK
+        string valor
+    }
+
+    INFORMES {
+        int      id_informe    PK
+        date     semana_inicio
+        date     semana_fin
+        longtext contenido_html
+        datetime generado_en
+    }
+
+    %% --- RELACIONES ---
+
+    USUARIOS             ||--o{ ASIGNATURA_PROFESORES : "imparte"
+    ASIGNATURAS          ||--o{ ASIGNATURA_PROFESORES : "tiene"
+
+    ASIGNATURAS          ||--o{ HORARIOS              : "se imparte en"
+
+    ALUMNOS              ||--o{ MATRICULAS             : "se matricula en"
+    ASIGNATURAS          ||--o{ MATRICULAS             : "tiene inscritos"
+
+    ALUMNOS              ||--o{ ASISTENCIA             : "genera"
+    HORARIOS             ||--o{ ASISTENCIA             : "corresponde a"
+
+    ALUMNOS              ||--o{ ESTADO_ALUMNO_DIA      : "tiene estado diario"

@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Alumnos — Asistenciator{% endblock %}
+{% block page_title %}Gestión de Alumnos/as{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:var(--tx0);">
+            <i class="bi bi-people-fill me-2" style="color:var(--acc);"></i>
+            Alumnos Registrados
+        </h2>
+        <p style="font-size:13px;color:var(--tx1);margin:4px 0 0;">
+            {{ alumnos | length }} alumno{{ 's' if alumnos | length != 1 else '' }} en el sistema
+        </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.es_tutor %}
+        <button class="btn-pause reanudar" onclick="abrirDiscovery()" title="Detectar un móvil nuevo por Bluetooth">
+            <i class="bi bi-bluetooth"></i> Detectar móvil nuevo
+        </button>
+        <button class="btn-scan" data-bs-toggle="modal" data-bs-target="#modalAnadir">
+            <i class="bi bi-person-plus-fill"></i> Añadir Alumno/a
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- TABLA DE ALUMNOS -->
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width:56px;"></th>
+                    <th>Nombre Completo</th>
+                    <th class="d-none d-md-table-cell">Grupo</th>
+                    <th class="d-none d-lg-table-cell">Turno</th>
+                    <th class="d-none d-xl-table-cell">MAC Bluetooth</th>
+                    <th class="d-none d-xxl-table-cell">Contacto Padre/Madre</th>
+                    <th style="text-align:right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if alumnos %}
+                    {% for alumno in alumnos %}
+                    {% set nombre_completo = alumno.nombre ~ ' ' ~ alumno.apellidos %}
+                    <tr class="{{ 'opacity-50' if not alumno.activo else '' }}">
+                        <td>
+                            <div class="student-avatar"
+                                 style="background:{{ nombre_completo | color_avatar }};">
+                                {{ nombre_completo | iniciales }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="student-name">{{ nombre_completo }}</span>
+                            {% if not alumno.activo %}
+                                <span class="badge-sin-datos ms-1" style="font-size:11px;">inactivo</span>
+                            {% endif %}
+                            {% if not alumno.mac_bluetooth %}
+                                <span class="badge-sin-datos ms-1" style="font-size:11px;">
+                                    <i class="bi bi-bluetooth-x"></i> sin MAC
+                                </span>
+                            {% endif %}
+                            <div class="d-md-none mt-1" style="font-size:12px;color:var(--tx2);">{{ alumno.grupo }}</div>
+                        </td>
+                        <td class="d-none d-md-table-cell" style="color:var(--tx1);font-size:13px;">{{ alumno.grupo }}</td>
+                        <td class="d-none d-lg-table-cell">
+                            {% if alumno.turno == 'mañana' %}
+                                <span style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                                             padding:2px 8px;border-radius:2px;
+                                             background:rgba(255,191,0,0.12);border:1px solid rgba(255,191,0,0.3);
+                                             color:#fbbf24;letter-spacing:0.05em;">
+                                    &#x2600; MAÑANA
+                                </span>
+                            {% elif alumno.turno == 'tarde' %}
+                                <span style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                                             padding:2px 8px;border-radius:2px;
+                                             background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);
+                                             color:#a78bfa;letter-spacing:0.05em;">
+                                    &#x25D1; TARDE
+                                </span>
+                            {% else %}
+                                <span style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                                             padding:2px 8px;border-radius:2px;
+                                             background:var(--acc-soft);border:1px solid var(--acc-border);
+                                             color:var(--acc);letter-spacing:0.05em;">
+                                    &#x25C8; AMBOS
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-xl-table-cell">
+                            {% if alumno.mac_bluetooth %}
+                                <code class="student-mac">{{ alumno.mac_bluetooth }}</code>
+                            {% else %}
+                                <span style="color:var(--tx2);font-size:12px;">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-xxl-table-cell" style="font-size:12px;color:var(--tx1);">
+                            {% if alumno.email_tutor %}
+                                <div><i class="bi bi-envelope me-1" style="color:var(--tx2);"></i>{{ alumno.email_tutor }}</div>
+                            {% endif %}
+                            {% if alumno.telefono_tutor %}
+                                <div class="mt-1"><i class="bi bi-telephone me-1" style="color:var(--tx2);"></i>{{ alumno.telefono_tutor }}</div>
+                            {% endif %}
+                            {% if not alumno.email_tutor and not alumno.telefono_tutor %}
+                                <span style="color:var(--tx2);">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="d-flex gap-2 justify-content-end">
+                                {% if current_user.es_tutor %}
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        onclick="abrirEditar({{ alumno.id_alumno }}, '{{ alumno.nombre | replace("'", "\\'") }}', '{{ alumno.apellidos | replace("'", "\\'") }}', '{{ alumno.mac_bluetooth or "" }}', '{{ alumno.grupo | replace("'", "\\'") }}', '{{ alumno.turno or "ambos" }}', '{{ alumno.email_tutor or "" }}', '{{ alumno.telefono_tutor or "" }}')"
+                                        style="border-radius:7px;font-size:12px;border-color:var(--border);color:var(--tx1);">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                <form action="{{ url_for('toggle_alumno', id_alumno=alumno.id_alumno) }}"
+                                      method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm"
+                                            style="border-radius:7px;font-size:12px;border:1px solid var(--border);
+                                                   color:var(--tx1);background:transparent;"
+                                            title="{{ 'Activar' if not alumno.activo else 'Desactivar' }}">
+                                        <i class="bi {{ 'bi-person-check' if not alumno.activo else 'bi-person-dash' }}"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if current_user.es_admin %}
+                                <form action="{{ url_for('delete_alumno', id_alumno=alumno.id_alumno) }}"
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirmarBorrado('{{ nombre_completo | replace("'", "\\'") }}')">
+                                    <button type="submit" class="btn btn-sm"
+                                            style="border-radius:7px;font-size:12px;
+                                                   border:1px solid var(--danger-tx);
+                                                   color:var(--danger-tx);background:transparent;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="bi bi-person-x"></i>
+                                <p><strong>No hay alumnos/as registrados/as.</strong><br>
+                                   Pulsa "Añadir Alumno/a" para registrar el primero.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL DISCOVERY BLUETOOTH
+============================================================ -->
+<div class="modal fade" id="modalDiscovery" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"
+                 style="background:linear-gradient(135deg,var(--acc-dark),var(--acc));border:none;">
+                <h5 class="modal-title" style="font-size:15px;color:#fff;">
+                    <i class="bi bi-bluetooth me-2"></i>Detectar Móvil por Bluetooth
+                </h5>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" onclick="cancelarDiscovery()"></button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+
+                <div id="disc-idle" class="text-center" style="padding:12px 0;">
+                    <i class="bi bi-bluetooth" style="font-size:2.8rem;color:var(--acc);display:block;margin-bottom:14px;"></i>
+                    <p style="font-size:14px;color:var(--tx0);font-weight:600;margin:0 0 8px;">¿Cómo funciona?</p>
+                    <ol style="font-size:13px;color:var(--tx1);text-align:left;padding-left:20px;line-height:2;">
+                        <li>El alumno/a activa el Bluetooth en modo <strong>visible</strong>.</li>
+                        <li>Pulsa "Iniciar escaneo" — los dispositivos aparecen en tiempo real.</li>
+                        <li>Selecciona el dispositivo en la lista.</li>
+                        <li>Elige si crear un alumno nuevo o asignar a uno existente.</li>
+                    </ol>
+                    <button class="btn-scan w-100 mt-3" onclick="iniciarDiscovery()">
+                        <i class="bi bi-search"></i> Iniciar escaneo
+                    </button>
+                </div>
+
+                <div id="disc-scanning" style="display:none;padding:12px 0;">
+                    <div style="text-align:center;margin-bottom:12px;">
+                        <div class="spinner mx-auto mb-3" style="width:36px;height:36px;border-width:3px;border-color:var(--acc-soft);border-top-color:var(--acc);"></div>
+                        <p style="font-size:14px;font-weight:600;color:var(--tx0);margin:0 0 4px;">Escaneando dispositivos Bluetooth…</p>
+                        <p style="font-size:12px;color:var(--tx1);margin:0 0 14px;">El móvil del alumno debe tener el Bluetooth <strong>visible</strong>.</p>
+                        <div id="disc-found-count" style="font-size:12px;color:var(--acc);margin-bottom:14px;min-height:18px;"></div>
+                        <button onclick="detenerDiscovery()"
+                                style="background:transparent;border:1px solid var(--border);color:var(--tx1);
+                                       font-size:12px;padding:6px 16px;border-radius:8px;cursor:pointer;">
+                            <i class="bi bi-stop-circle me-1"></i>Detener escaneo
+                        </button>
+                    </div>
+                    <div id="disc-live-list" style="max-height:260px;overflow-y:auto;"></div>
+                </div>
+
+                <div id="disc-results" style="display:none;">
+                    <p style="font-size:13px;color:var(--tx1);margin:0 0 12px;">Dispositivos encontrados no registrados:</p>
+                    <div id="disc-list"></div>
+                    <div id="disc-empty" style="display:none;text-align:center;padding:20px 0;">
+                        <i class="bi bi-bluetooth-x" style="font-size:2.2rem;color:var(--tx2);display:block;margin-bottom:10px;"></i>
+                        <p style="font-size:13px;color:var(--tx1);">No se encontraron dispositivos nuevos.</p>
+                        <button class="btn-scan mt-2" onclick="reiniciarDiscovery()">
+                            <i class="bi bi-arrow-clockwise"></i> Reintentar
+                        </button>
+                    </div>
+                </div>
+
+                <div id="disc-action" style="display:none;">
+                    <div style="background:var(--acc-soft);border:1px solid var(--acc-border);border-radius:10px;padding:14px;margin-bottom:16px;">
+                        <p style="margin:0;font-size:12px;color:var(--tx1);">Dispositivo seleccionado</p>
+                        <p style="margin:4px 0 0;font-size:14px;font-weight:700;color:var(--acc);" id="disc-selected-name"></p>
+                        <code style="font-size:12px;color:var(--tx1);" id="disc-selected-mac"></code>
+                    </div>
+                    <div class="d-flex gap-2 flex-column">
+                        <button class="btn-scan w-100" onclick="usarMacParaNuevo()">
+                            <i class="bi bi-person-plus-fill"></i> Crear nuevo alumno/a con esta MAC
+                        </button>
+                        <button class="btn-export w-100" style="justify-content:center;" onclick="asignarMacExistente()">
+                            <i class="bi bi-person-check"></i> Asignar a alumno/a existente
+                        </button>
+                    </div>
+                </div>
+
+                <div id="disc-assign" style="display:none;">
+                    <p style="font-size:13px;color:var(--tx1);margin-bottom:10px;">Selecciona el alumno/a:</p>
+                    <select id="disc-alumno-select" class="form-select mb-3">
+                        {% for alumno in alumnos %}
+                        {% set nc = alumno.nombre ~ ' ' ~ alumno.apellidos %}
+                        <option value="{{ alumno.id_alumno }}">{{ nc }} ({{ alumno.grupo }})</option>
+                        {% endfor %}
+                    </select>
+                    <div class="d-flex gap-2">
+                        <button class="btn-scan flex-fill" onclick="confirmarAsignacion()">
+                            <i class="bi bi-check-lg"></i> Asignar
+                        </button>
+                        <button class="btn btn-sm" onclick="volverAccion()"
+                                style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                            Volver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL DE EDICIÓN (único, reutilizable)
+============================================================ -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="student-avatar" id="edit-avatar" style="background:#4fc3f7;">??</div>
+                    <div>
+                        <h5 class="modal-title mb-0" style="font-size:15px;color:var(--tx0);">Editar alumno/a</h5>
+                        <p class="mb-0" style="font-size:12px;color:var(--tx1);" id="edit-nombre-label"></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditar" action="" method="POST">
+                <div class="modal-body" style="padding:22px 26px;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" name="nombre" id="edit-nombre" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellidos</label>
+                            <input type="text" name="apellidos" id="edit-apellidos" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">MAC Bluetooth <span style="color:var(--tx2);font-weight:400;">(opcional)</span></label>
+                            <input type="text" name="mac" id="edit-mac" class="form-control"
+                                   pattern="^([0-9A-Fa-f]{2}[:\-]){5}([0-9A-Fa-f]{2})$"
+                                   placeholder="AA:BB:CC:DD:EE:FF"
+                                   style="font-family:monospace;">
+                            <div class="form-text">Déjalo vacío si aún no se conoce.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Grupo</label>
+                            <input type="text" name="grupo" id="edit-grupo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Turno</label>
+                            <select name="turno" id="edit-turno" class="form-select">
+                                <option value="ma&#xF1;ana">&#x2600; Mañana</option>
+                                <option value="tarde">&#x25D1; Tarde</option>
+                                <option value="ambos" selected>&#x25C8; Ambos turnos</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <hr style="border-color:var(--border);">
+                            <p style="font-size:12px;color:var(--tx2);margin:0;">
+                                <i class="bi bi-person-vcard me-1"></i>
+                                Contacto del padre/madre/tutor legal <span style="font-weight:400;">(opcional)</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email_tutor" id="edit-email" class="form-control" placeholder="padre@correo.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" name="telefono_tutor" id="edit-telefono" class="form-control" placeholder="600 000 000">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:9px 20px;font-size:13px;">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL AÑADIR NUEVO ALUMNO
+============================================================ -->
+<div class="modal fade" id="modalAnadir" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"
+                 style="background:linear-gradient(135deg,var(--acc-dark),var(--acc));border:none;">
+                <h5 class="modal-title" style="font-size:15px;color:#fff;">
+                    <i class="bi bi-person-plus-fill me-2"></i>Registrar Nuevo Alumno/a
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_alumno') }}" method="POST" id="formNuevoAlumno">
+                <div class="modal-body" style="padding:22px 26px;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre <span style="color:var(--danger-tx);">*</span></label>
+                            <input type="text" name="nombre" id="nuevo-nombre" class="form-control" required placeholder="Ej: María">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellidos <span style="color:var(--danger-tx);">*</span></label>
+                            <input type="text" name="apellidos" class="form-control" required placeholder="Ej: García López">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                MAC Bluetooth
+                                <span style="color:var(--tx2);font-weight:400;">(opcional)</span>
+                            </label>
+                            <input type="text" name="mac" id="nuevo-mac" class="form-control"
+                                   pattern="^([0-9A-Fa-f]{2}[:\-]){5}([0-9A-Fa-f]{2})$"
+                                   placeholder="AA:BB:CC:DD:EE:FF"
+                                   style="font-family:monospace;">
+                            <div class="form-text">
+                                <i class="bi bi-bluetooth me-1"></i>
+                                Puedes asignarla después con "Detectar móvil nuevo".
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Grupo <span style="color:var(--danger-tx);">*</span></label>
+                            <input type="text" name="grupo" class="form-control" required placeholder="Ej: 1º DAM A">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Turno</label>
+                            <select name="turno" class="form-select">
+                                <option value="ma&#xF1;ana">&#x2600; Mañana</option>
+                                <option value="tarde">&#x25D1; Tarde</option>
+                                <option value="ambos" selected>&#x25C8; Ambos turnos</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <hr style="border-color:var(--border);">
+                            <p style="font-size:12px;color:var(--tx2);margin:0;">
+                                <i class="bi bi-person-vcard me-1"></i>
+                                Contacto del padre/madre/tutor legal
+                                <span style="font-weight:400;">(opcional)</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email_tutor" class="form-control" placeholder="padre@correo.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" name="telefono_tutor" class="form-control" placeholder="600 000 000">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:9px 20px;font-size:13px;">
+                        <i class="bi bi-plus-lg me-1"></i>Añadir Alumno/a
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+let macSeleccionada = '';
+let nombreSeleccionado = '';
+
+function abrirDiscovery() {
+    mostrarEstado('idle');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDiscovery')).show();
+}
+
+function mostrarEstado(estado) {
+    ['idle','scanning','results','action','assign'].forEach(s => {
+        const el = document.getElementById('disc-' + s);
+        if (el) el.style.display = 'none';
+    });
+    const target = document.getElementById('disc-' + estado);
+    if (target) target.style.display = '';
+}
+
+let _currentScanId  = null;
+let _pollInterval   = null;
+
+function iniciarDiscovery() {
+    mostrarEstado('scanning');
+    const liveList = document.getElementById('disc-live-list');
+    if (liveList) { liveList.innerHTML = ''; delete liveList.dataset.count; }
+    const countEl = document.getElementById('disc-found-count');
+    if (countEl) countEl.textContent = 'Buscando…';
+
+    fetch('/alumnos/discover/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status !== 'ok') { mostrarEstado('idle'); return; }
+        _currentScanId = data.scan_id;
+        _pollInterval = setInterval(pollDiscovery, 1500);
+    })
+    .catch(() => {
+        alert('⚠️ Error al iniciar el escaneo. Comprueba que el Bluetooth está activo.');
+        mostrarEstado('idle');
+    });
+}
+
+function pollDiscovery() {
+    if (!_currentScanId) return;
+    fetch('/alumnos/discover/poll/' + _currentScanId)
+        .then(r => r.json())
+        .then(data => {
+            if (data.status !== 'ok') return;
+            _actualizarListaLive(data.dispositivos || []);
+            const countEl = document.getElementById('disc-found-count');
+            if (countEl) {
+                const n = data.dispositivos.length;
+                countEl.textContent = n > 0
+                    ? n + ' dispositivo' + (n > 1 ? 's' : '') + ' encontrado' + (n > 1 ? 's' : '')
+                    : 'Buscando…';
+            }
+            if (!data.running) {
+                clearInterval(_pollInterval);
+                _pollInterval = null;
+                setTimeout(() => mostrarResultadosFinales(data.dispositivos || []), 300);
+            }
+        })
+        .catch(() => {});
+}
+
+function _renderDispositivo(d, onclick) {
+    const nombre = (d.nombre || 'Desconocido').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return `<div onclick="${onclick}('${d.mac}','${nombre}')"
+                 style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:10px;
+                        border:1px solid var(--border);background:var(--bg2);cursor:pointer;
+                        margin-bottom:8px;transition:border-color .15s;"
+                 onmouseover="this.style.borderColor='var(--acc)'"
+                 onmouseout="this.style.borderColor='var(--border)'">
+               <div style="width:38px;height:38px;border-radius:9px;background:var(--acc-soft);
+                           display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                   <i class="bi bi-phone" style="color:var(--acc);font-size:17px;"></i>
+               </div>
+               <div>
+                   <div style="font-size:14px;font-weight:600;color:var(--tx0);">${d.nombre||'Desconocido'}</div>
+                   <code style="font-size:12px;color:var(--tx1);">${d.mac}</code>
+               </div>
+               <i class="bi bi-chevron-right ms-auto" style="color:var(--tx2);font-size:13px;"></i>
+           </div>`;
+}
+
+function _actualizarListaLive(dispositivos) {
+    const lista = document.getElementById('disc-live-list');
+    if (!lista) return;
+    if (parseInt(lista.dataset.count || '-1') === dispositivos.length) return;
+    lista.dataset.count = dispositivos.length;
+    lista.innerHTML = dispositivos.map(d => _renderDispositivo(d, 'seleccionarYDetener')).join('');
+}
+
+function mostrarResultadosFinales(dispositivos) {
+    mostrarEstado('results');
+    const lista  = document.getElementById('disc-list');
+    const empty  = document.getElementById('disc-empty');
+    if (!dispositivos.length) { lista.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    lista.innerHTML = dispositivos.map(d => _renderDispositivo(d, 'seleccionarDispositivo')).join('');
+}
+
+function seleccionarYDetener(mac, nombre) {
+    _detenerScanSilencioso();
+    seleccionarDispositivo(mac, nombre);
+}
+
+function seleccionarDispositivo(mac, nombre) {
+    macSeleccionada = mac; nombreSeleccionado = nombre;
+    document.getElementById('disc-selected-mac').textContent = mac;
+    document.getElementById('disc-selected-name').textContent = nombre;
+    mostrarEstado('action');
+}
+
+function detenerDiscovery() {
+    const scanId = _currentScanId;
+    _detenerScanSilencioso();
+    if (scanId) {
+        fetch('/alumnos/discover/poll/' + scanId)
+            .then(r => r.json())
+            .then(data => mostrarResultadosFinales(data.dispositivos || []))
+            .catch(() => mostrarResultadosFinales([]));
+    } else {
+        mostrarResultadosFinales([]);
+    }
+}
+
+function _detenerScanSilencioso() {
+    if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+    if (_currentScanId) {
+        fetch('/alumnos/discover/stop/' + _currentScanId, { method: 'POST' }).catch(() => {});
+        _currentScanId = null;
+    }
+}
+
+function usarMacParaNuevo() {
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDiscovery')).hide();
+    setTimeout(() => {
+        document.getElementById('nuevo-mac').value = macSeleccionada;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAnadir')).show();
+    }, 400);
+}
+
+function asignarMacExistente() { mostrarEstado('assign'); }
+function volverAccion() { mostrarEstado('action'); }
+function reiniciarDiscovery() { _detenerScanSilencioso(); mostrarEstado('idle'); }
+function cancelarDiscovery() { _detenerScanSilencioso(); mostrarEstado('idle'); }
+
+function confirmarAsignacion() {
+    const select = document.getElementById('disc-alumno-select');
+    const idAlumno = select.value;
+    if (!confirm('¿Asignar la MAC ' + macSeleccionada + ' a ' + select.options[select.selectedIndex].text + '?')) return;
+    fetch('/alumnos/asignar-mac/' + idAlumno, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac: macSeleccionada })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDiscovery')).hide();
+            window.location.reload();
+        } else {
+            alert('❌ ' + (data.mensaje || 'Error al asignar la MAC.'));
+        }
+    })
+    .catch(() => alert('⚠️ Error de conexión.'));
+}
+
+// ── Modal de edición dinámico ──────────────────────────────────────
+function abrirEditar(id, nombre, apellidos, mac, grupo, turno, email, telefono) {
+    document.getElementById('formEditar').action = '/alumnos/edit/' + id;
+    document.getElementById('edit-nombre').value    = nombre;
+    document.getElementById('edit-apellidos').value = apellidos;
+    document.getElementById('edit-mac').value       = mac;
+    document.getElementById('edit-grupo').value     = grupo;
+    document.getElementById('edit-email').value     = email;
+    document.getElementById('edit-telefono').value  = telefono;
+    document.getElementById('edit-nombre-label').textContent = nombre + ' ' + apellidos;
+
+    const sel = document.getElementById('edit-turno');
+    for (let i = 0; i < sel.options.length; i++) {
+        sel.options[i].selected = (sel.options[i].value === turno);
+    }
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
+}
+
+function confirmarBorrado(nombre) {
+    return confirm('¿Borrar a "' + nombre + '"?\n\nSe eliminarán también todos sus registros. Esta acción no se puede deshacer.');
+}
+</script>
+{% endblock %}

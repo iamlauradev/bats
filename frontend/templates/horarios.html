@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Horarios — Asistenciator{% endblock %}
+{% block page_title %}Horarios{% endblock %}
+
+{% block content %}
+
+{# ── Paleta de 10 colores ── [bg_dark, text_dark, bg_light, text_light] #}
+{% set PALETA = [
+    ['rgba(168,85,247,0.20)',  '#c084fc', 'rgba(168,85,247,0.15)',  '#7e22ce'],
+    ['rgba(34,211,238,0.20)',  '#67e8f9', 'rgba(34,211,238,0.15)',  '#0e7490'],
+    ['rgba(74,222,128,0.20)',  '#86efac', 'rgba(74,222,128,0.15)',  '#15803d'],
+    ['rgba(251,191,36,0.20)',  '#fde68a', 'rgba(251,191,36,0.15)',  '#b45309'],
+    ['rgba(248,113,113,0.20)', '#fca5a5', 'rgba(248,113,113,0.15)', '#b91c1c'],
+    ['rgba(96,165,250,0.20)',  '#93c5fd', 'rgba(96,165,250,0.15)',  '#1d4ed8'],
+    ['rgba(251,146,60,0.20)',  '#fdba74', 'rgba(251,146,60,0.15)',  '#c2410c'],
+    ['rgba(167,243,208,0.20)', '#6ee7b7', 'rgba(167,243,208,0.15)', '#065f46'],
+    ['rgba(216,180,254,0.20)', '#e9d5ff', 'rgba(216,180,254,0.15)', '#6d28d9'],
+    ['rgba(253,186,116,0.20)', '#fed7aa', 'rgba(253,186,116,0.15)', '#9a3412'],
+] %}
+
+{# Franjas únicas ordenadas — los horarios ya vienen por hora_inicio ASC desde Python #}
+{% set franjas_vistas = [] %}
+{% set franjas_unicas = [] %}
+{% for h in horarios %}
+    {% set key = h.hora_inicio | string ~ '|' ~ h.hora_fin | string %}
+    {% if key not in franjas_vistas %}
+        {% if franjas_vistas.append(key) %}{% endif %}
+        {% if franjas_unicas.append({'ini': h.hora_inicio | string, 'fin': h.hora_fin | string}) %}{% endif %}
+    {% endif %}
+{% endfor %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:var(--tx0);">
+            <i class="bi bi-grid-3x3-gap-fill me-2" style="color:var(--acc);"></i>
+            Cuadrícula de Horarios
+        </h2>
+        <p style="font-size:13px;color:var(--tx1);margin:4px 0 0;">
+            Vista semanal. El escaneo detecta la franja activa automáticamente por hora del sistema.
+        </p>
+    </div>
+    {% if current_user.es_tutor %}
+    <button class="btn-scan" data-bs-toggle="modal" data-bs-target="#modalAnadirHorario">
+        <i class="bi bi-plus-lg"></i> Añadir franjas
+    </button>
+    {% endif %}
+</div>
+
+
+{# ── CUADRÍCULA ── #}
+{% if horarios %}
+<div class="card mb-4" style="overflow:hidden;">
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;min-width:580px;">
+            <thead>
+                <tr>
+                    <th style="width:100px;padding:13px 16px;background:var(--bg2);
+                               border-bottom:2px solid var(--border);font-size:11px;
+                               text-transform:uppercase;letter-spacing:.07em;
+                               color:var(--tx2);font-weight:700;">
+                        Hora
+                    </th>
+                    {% for dia in dias %}
+                    <th style="padding:13px 10px;background:var(--bg2);
+                               border-bottom:2px solid var(--border);
+                               border-left:1px solid var(--border);
+                               font-size:13px;font-weight:700;
+                               color:var(--tx0);text-align:center;">
+                        {{ dia }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for franja in franjas_unicas %}
+                <tr>
+                    {# Hora #}
+                    <td style="padding:8px 14px;border-bottom:1px solid var(--border);
+                               border-right:2px solid var(--border);font-size:12px;
+                               font-weight:600;color:var(--tx1);white-space:nowrap;
+                               background:var(--bg2);vertical-align:middle;">
+                        {{ franja.ini }}<br>
+                        <span style="font-size:11px;font-weight:400;color:var(--tx2);">{{ franja.fin }}</span>
+                    </td>
+
+                    {# Celdas de lunes a viernes #}
+                    {% for num_dia in range(5) %}
+                        {% set ns = namespace(found=none) %}
+                        {% for h in horarios %}
+                            {% if h.hora_inicio|string == franja.ini
+                               and h.hora_fin|string == franja.fin
+                               and h.dia_semana == num_dia %}
+                                {% set ns.found = h %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if ns.found %}
+                            {% set h   = ns.found %}
+                            {% set idx = color_map.get(h.id_asignatura, 0) %}
+                            {% set col = PALETA[idx] %}
+                            <td style="padding:5px;border-bottom:1px solid var(--border);
+                                       border-left:1px solid var(--border);vertical-align:top;">
+                                <div class="horario-cell"
+                                     data-dark-bg="{{ col[0] }}"
+                                     data-dark-tx="{{ col[1] }}"
+                                     data-light-bg="{{ col[2] }}"
+                                     data-light-tx="{{ col[3] }}"
+                                     style="border-radius:9px;padding:9px 11px;
+                                            position:relative;min-height:60px;">
+                                    <div class="cell-siglas"
+                                         style="font-size:17px;font-weight:800;
+                                                letter-spacing:.02em;line-height:1.1;">
+                                        {{ h.siglas }}
+                                    </div>
+                                    <div class="cell-aula"
+                                         style="font-size:10px;opacity:.75;margin-top:3px;">
+                                        {{ h.aula }}
+                                    </div>
+                                    {% if current_user.es_tutor %}
+                                    <form action="{{ url_for('delete_horario', id_horario=h.id_horario) }}"
+                                          method="POST" class="d-inline"
+                                          onsubmit="return confirm('¿Eliminar esta franja?')">
+                                        <button type="submit" class="cell-del-btn"
+                                                style="position:absolute;top:4px;right:4px;
+                                                       background:none;border:none;padding:2px 5px;
+                                                       cursor:pointer;opacity:0;transition:opacity .15s;
+                                                       font-size:12px;"
+                                                title="Eliminar franja">
+                                            <i class="bi bi-x-circle-fill"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        {% else %}
+                            <td style="padding:5px;border-bottom:1px solid var(--border);
+                                       border-left:1px solid var(--border);">
+                                <div style="min-height:60px;border-radius:9px;
+                                            background:var(--bg2);opacity:.25;"></div>
+                            </td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <p><strong>No hay franjas horarias definidas.</strong><br>
+               Pulsa "Añadir franjas" para crear la primera.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+{# ── LEYENDA ── #}
+{% if asignaturas %}
+<div class="card">
+    <div class="card-body" style="padding:20px 24px;">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.07em;color:var(--tx2);margin:0 0 14px;">
+            Leyenda de asignaturas
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            {% for asig in asignaturas %}
+                {% set idx = color_map.get(asig.id_asignatura, 0) %}
+                {% set col = PALETA[idx] %}
+                <div style="display:flex;align-items:flex-start;gap:11px;
+                             background:var(--bg2);border-radius:11px;
+                             padding:11px 15px;border:1px solid var(--border);
+                             min-width:190px;flex:1;max-width:320px;">
+                    <div class="leyenda-chip"
+                         data-dark-bg="{{ col[0] }}" data-dark-tx="{{ col[1] }}"
+                         data-light-bg="{{ col[2] }}" data-light-tx="{{ col[3] }}"
+                         style="width:42px;height:42px;border-radius:9px;flex-shrink:0;
+                                display:flex;align-items:center;justify-content:center;">
+                        <span class="leyenda-siglas"
+                              style="font-size:13px;font-weight:800;">{{ asig.siglas }}</span>
+                    </div>
+                    <div style="min-width:0;">
+                        <div style="font-size:14px;font-weight:700;color:var(--tx0);
+                                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            {{ asig.nombre }}
+                        </div>
+                        {% if asig.profesores %}
+                            {% for prof in asig.profesores %}
+                            <div style="font-size:12px;color:var(--tx1);">
+                                <i class="bi bi-person me-1" style="color:var(--tx2);"></i>{{ prof.nombre }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="font-size:12px;color:var(--tx2);">Sin profesor/a asignado/a</div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+{# ── MODAL: Añadir horario agrupado ── #}
+<div class="modal fade" id="modalAnadirHorario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"
+                 style="background:linear-gradient(135deg,var(--acc-dark),var(--acc));border:none;">
+                <h5 class="modal-title" style="font-size:15px;color:#fff;">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Añadir Franjas Horarias
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" style="padding:22px 26px;">
+                {% if not asignaturas %}
+                <div class="alert alert-warning" style="border-radius:10px;font-size:13px;border:none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Crea primero las asignaturas en
+                    <a href="{{ url_for('gestion_asignaturas') }}" style="color:inherit;font-weight:700;">Asignaturas</a>.
+                </div>
+                {% else %}
+
+                <div class="mb-4">
+                    <label class="form-label">Asignatura</label>
+                    <select id="sel-asignatura" class="form-select">
+                        <option value="" disabled selected>Selecciona una asignatura…</option>
+                        {% for asig in asignaturas %}
+                        <option value="{{ asig.id_asignatura }}">{{ asig.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label mb-0">Franjas horarias</label>
+                    <button type="button" onclick="agregarFranja()"
+                            style="border:1px solid var(--acc-border);color:var(--acc);
+                                   background:var(--acc-soft);border-radius:8px;
+                                   font-size:12px;padding:5px 13px;cursor:pointer;">
+                        <i class="bi bi-plus-lg me-1"></i>Añadir franja
+                    </button>
+                </div>
+
+                <div id="contenedor-franjas"></div>
+
+                <div id="error-horario" class="alert alert-danger mt-3"
+                     style="display:none;border-radius:10px;font-size:13px;border:none;"></div>
+
+                {% endif %}
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                        style="border:1px solid var(--border);color:var(--tx1);
+                               background:transparent;border-radius:8px;">
+                    Cancelar
+                </button>
+                {% if asignaturas %}
+                <button type="button" id="btn-guardar-franjas"
+                        class="btn-scan" style="padding:9px 20px;font-size:13px;"
+                        onclick="guardarFranjas()">
+                    <i class="bi bi-check-lg me-1"></i>Guardar franjas
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ─────────────────────────────────────────
+   COLORES POR TEMA
+───────────────────────────────────────── */
+function aplicarColoresCeldas() {
+    const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+
+    document.querySelectorAll('.horario-cell').forEach(el => {
+        el.style.background = dark ? el.dataset.darkBg : el.dataset.lightBg;
+        const tx = dark ? el.dataset.darkTx : el.dataset.lightTx;
+        el.querySelectorAll('.cell-siglas,.cell-aula,.cell-del-btn').forEach(t => {
+            t.style.color = tx;
+        });
+    });
+
+    document.querySelectorAll('.leyenda-chip').forEach(el => {
+        el.style.background = dark ? el.dataset.darkBg : el.dataset.lightBg;
+        const sp = el.querySelector('.leyenda-siglas');
+        if (sp) sp.style.color = dark ? el.dataset.darkTx : el.dataset.lightTx;
+    });
+}
+
+aplicarColoresCeldas();
+
+// Re-aplicar colores al cambiar de tema
+const _origToggle = window.toggleTheme;
+window.toggleTheme = function () { _origToggle(); aplicarColoresCeldas(); };
+
+// Botón borrar visible al hover
+document.querySelectorAll('.horario-cell').forEach(cel => {
+    const btn = cel.querySelector('.cell-del-btn');
+    if (!btn) return;
+    cel.addEventListener('mouseenter', () => btn.style.opacity = '1');
+    cel.addEventListener('mouseleave', () => btn.style.opacity = '0');
+});
+
+/* ─────────────────────────────────────────
+   MODAL — FRANJAS DINÁMICAS
+───────────────────────────────────────── */
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+let contadorFranjas = 0;
+
+document.getElementById('modalAnadirHorario')?.addEventListener('show.bs.modal', () => {
+    document.getElementById('contenedor-franjas').innerHTML = '';
+    contadorFranjas = 0;
+    ocultarError();
+    agregarFranja();
+});
+
+function agregarFranja() {
+    const id  = contadorFranjas++;
+    const div = document.createElement('div');
+    div.id = `franja-${id}`;
+    div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;' +
+        'align-items:end;background:var(--bg2);border:1px solid var(--border);' +
+        'border-radius:10px;padding:14px 16px;margin-bottom:10px;';
+
+    div.innerHTML = `
+        <div>
+            <label class="form-label" style="font-size:12px;">Día</label>
+            <select class="form-select franja-dia" style="font-size:13px;">
+                ${DIAS.map((d, i) => `<option value="${i}">${d}</option>`).join('')}
+            </select>
+        </div>
+        <div>
+            <label class="form-label" style="font-size:12px;">Hora inicio</label>
+            <input type="time" class="form-control franja-inicio" style="font-size:13px;">
+        </div>
+        <div>
+            <label class="form-label" style="font-size:12px;">Hora fin</label>
+            <input type="time" class="form-control franja-fin" style="font-size:13px;">
+        </div>
+        <div>
+            <label class="form-label" style="font-size:12px;">Aula</label>
+            <input type="text" class="form-control franja-aula"
+                   placeholder="Ej: Lab. Redes" style="font-size:13px;">
+        </div>
+        <div style="padding-bottom:2px;">
+            <button type="button" onclick="eliminarFranja(${id})"
+                    style="background:var(--danger-bg);border:1px solid var(--danger-tx);
+                           color:var(--danger-tx);border-radius:8px;padding:8px 11px;
+                           cursor:pointer;font-size:14px;display:flex;align-items:center;"
+                    title="Quitar esta fila">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>`;
+    document.getElementById('contenedor-franjas').appendChild(div);
+}
+
+function eliminarFranja(id) {
+    document.getElementById(`franja-${id}`)?.remove();
+}
+
+function ocultarError() {
+    const el = document.getElementById('error-horario');
+    if (el) el.style.display = 'none';
+}
+
+function mostrarError(msg) {
+    const el = document.getElementById('error-horario');
+    if (!el) return;
+    el.textContent = '⚠️ ' + msg;
+    el.style.display = '';
+}
+
+async function guardarFranjas() {
+    ocultarError();
+
+    const idAsig = document.getElementById('sel-asignatura')?.value;
+    if (!idAsig) { mostrarError('Selecciona una asignatura antes de guardar.'); return; }
+
+    const filas = document.querySelectorAll('#contenedor-franjas > div');
+    if (!filas.length) { mostrarError('Añade al menos una franja horaria.'); return; }
+
+    const franjas = [];
+    let todoBien = true;
+
+    filas.forEach(fila => {
+        const dia    = fila.querySelector('.franja-dia')?.value;
+        const inicio = fila.querySelector('.franja-inicio')?.value?.trim();
+        const fin    = fila.querySelector('.franja-fin')?.value?.trim();
+        const aula   = fila.querySelector('.franja-aula')?.value?.trim();
+        if (!inicio || !fin || !aula || inicio >= fin) { todoBien = false; return; }
+        franjas.push({ dia_semana: parseInt(dia), hora_inicio: inicio, hora_fin: fin, aula });
+    });
+
+    if (!todoBien) {
+        mostrarError('Revisa las franjas: hora inicio < hora fin, y el aula no puede estar vacía.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-guardar-franjas');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>&nbsp;Guardando…';
+
+    try {
+        const resp = await fetch('/horarios/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_asignatura: parseInt(idAsig), franjas }),
+        });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+            window.location.reload();
+        } else {
+            mostrarError(data.mensaje || 'Error al guardar.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Guardar franjas';
+        }
+    } catch {
+        mostrarError('Error de conexión con el servidor.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Guardar franjas';
+    }
+}
+</script>
+{% endblock %}

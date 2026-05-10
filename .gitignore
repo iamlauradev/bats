@@ -1,0 +1,68 @@
+# =============================================================================
+# ASISTENCIATOR IoT — .gitignore
+# =============================================================================
+
+# ─── SECRETOS Y CONFIGURACIÓN LOCAL ──────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ─── BACKUPS DE BASE DE DATOS ────────────────────────────────────────────
+# Los dumps contienen datos personales de alumnos (RGPD).
+# Se almacenan en /backups/asistenciator/ fuera del repositorio.
+# Si se añade una carpeta backups/ local al proyecto, ignorarla también.
+backups/
+*.sql
+*.sql.gz
+# Excepciones: los scripts de esquema e inicialización sí van al repo
+!db/scripts/*.sql
+
+# ─── DATOS PERSISTENTES DE MARIADB ───────────────────────────────────────
+# Generados al arrancar Docker. Pueden contener datos personales de alumnos.
+db/mariadb_data/
+
+# ─── LOGS ────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── RESULTADOS DE LAS PRUEBAS POC ───────────────────────────────────────
+poc/resultados_poc/
+
+# ─── PYTHON ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# ─── SISTEMA OPERATIVO ───────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ─── IDEs Y EDITORES ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

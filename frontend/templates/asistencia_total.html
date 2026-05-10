@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Asistencia Total — Asistenciator{% endblock %}
+{% block page_title %}ASISTENCIA TOTAL{% endblock %}
+
+{% block content %}
+<div style="padding:28px 28px 60px;">
+
+    {# ── Cabecera ─────────────────────────────────────────────────────────── #}
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                flex-wrap:wrap;gap:12px;margin-bottom:26px;">
+        <div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                      color:var(--tx2);letter-spacing:0.08em;margin:0;">
+                // VISTA ACUMULADA · TODA LA TEMPORADA · SOLO ADMIN & TUTOR
+            </p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+
+            {# Filtro turno #}
+            <div style="display:flex;background:var(--bg2);border:1px solid var(--border);
+                        border-radius:8px;overflow:hidden;font-family:'Share Tech Mono',monospace;
+                        font-size:11px;letter-spacing:0.05em;">
+                <button onclick="setTurno('todos')"   id="btn-todos"   class="turno-btn active"
+                        style="">TODOS</button>
+                <button onclick="setTurno('mañana')"  id="btn-manana"  class="turno-btn"
+                        >☀ MAÑANA</button>
+                <button onclick="setTurno('tarde')"   id="btn-tarde"   class="turno-btn"
+                        >◑ TARDE</button>
+            </div>
+
+            {# Buscador por nombre #}
+            <div style="position:relative;">
+                <i class="bi bi-search" style="position:absolute;left:10px;top:50%;
+                   transform:translateY(-50%);color:var(--tx2);font-size:12px;pointer-events:none;"></i>
+                <input id="busqueda" type="text" placeholder="Buscar alumno…"
+                       oninput="filtrar()"
+                       style="background:var(--bg2);border:1px solid var(--border);
+                              border-radius:8px;color:var(--tx0);font-family:'Share Tech Mono',monospace;
+                              font-size:12px;padding:7px 12px 7px 30px;outline:none;width:200px;
+                              transition:border-color .2s;"
+                       onfocus="this.style.borderColor='var(--acc)'"
+                       onblur="this.style.borderColor='var(--border)'">
+            </div>
+
+            {# Filtro faltas #}
+            <select id="filtro-faltas" onchange="filtrar()"
+                    style="background:var(--bg2);border:1px solid var(--border);
+                           border-radius:8px;color:var(--tx1);font-family:'Share Tech Mono',monospace;
+                           font-size:11px;padding:7px 12px;outline:none;cursor:pointer;">
+                <option value="">Todas las asistencias</option>
+                <option value="ok">✅ Sin faltas (100 %)</option>
+                <option value="riesgo">⚠️ En riesgo (&lt; 85 %)</option>
+                <option value="critico">🚨 Crítico (&lt; 60 %)</option>
+            </select>
+        </div>
+    </div>
+
+    {# ── Tarjetas resumen ─────────────────────────────────────────────────── #}
+    {% set total_alumnos     = alumnos | length %}
+    {% set sin_faltas        = alumnos | selectattr('clases_ausentes', 'eq', 0) | list | length %}
+    {% set en_riesgo         = alumnos | selectattr('pct_asistencia', 'lt', 85)
+                                       | selectattr('pct_asistencia', 'ge', 60) | list | length %}
+    {% set critico           = alumnos | selectattr('pct_asistencia', 'lt', 60) | list | length %}
+    {% set total_faltas_dia  = alumnos | sum(attribute='dias_falta_total') %}
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+                gap:14px;margin-bottom:26px;">
+
+        {% for label, val, icon, color in [
+            ('Alumnos',     total_alumnos,    'bi-people-fill',       'var(--acc)'),
+            ('Sin faltas',  sin_faltas,       'bi-check-circle-fill', '#3de87a'),
+            ('En riesgo',   en_riesgo,        'bi-exclamation-triangle-fill', '#f0a500'),
+            ('Crítico',     critico,          'bi-x-circle-fill',     'var(--danger-tx)'),
+            ('Días ausente total', total_faltas_dia, 'bi-calendar-x', 'var(--tx2)'),
+        ] %}
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+                    padding:16px 18px;display:flex;flex-direction:column;gap:4px;">
+            <div style="font-size:1.4rem;color:{{ color }};"><i class="bi {{ icon }}"></i></div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:700;
+                        color:var(--tx0);line-height:1;">{{ val }}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                        color:var(--tx2);letter-spacing:0.06em;text-transform:uppercase;">{{ label }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── Tabla principal ──────────────────────────────────────────────────── #}
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+                overflow:hidden;">
+
+        <div style="overflow-x:auto;">
+        <table id="tabla-total" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+            <tr style="background:var(--bg3);border-bottom:1px solid var(--border);">
+                <th style="padding:12px 16px;text-align:left;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;">
+                    ALUMNO
+                </th>
+                <th style="padding:12px 12px;text-align:left;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;">
+                    GRUPO
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;">
+                    TURNO
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:#3de87a;letter-spacing:0.1em;font-weight:400;">
+                    ✅ CLASES PRES.
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--danger-tx);letter-spacing:0.1em;font-weight:400;">
+                    ❌ CLASES AUS.
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;">
+                    TOTAL CLASES
+                </th>
+                <th style="padding:12px 16px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;">
+                    % ASIST.
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;border-left:1px solid var(--border);">
+                    DÍAS ASIST.
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--danger-tx);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;">
+                    DÍAS AUS. TOTAL
+                </th>
+                <th style="padding:12px 12px;text-align:center;font-family:'Share Tech Mono',monospace;
+                           font-size:10px;color:var(--tx2);letter-spacing:0.1em;font-weight:400;
+                           white-space:nowrap;">
+                    DÍAS TOT.
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for al in alumnos %}
+            {% set pct = al.pct_asistencia %}
+            {% if pct >= 85 %}
+                {% set bar_color = '#3de87a' %}
+                {% set row_flag  = 'ok' %}
+            {% elif pct >= 60 %}
+                {% set bar_color = '#f0a500' %}
+                {% set row_flag  = 'riesgo' %}
+            {% else %}
+                {% set bar_color = 'var(--danger-tx)' %}
+                {% set row_flag  = 'critico' %}
+            {% endif %}
+
+            <tr class="fila-alumno"
+                data-turno="{{ al.turno }}"
+                data-nombre="{{ (al.nombre_completo) | lower }}"
+                data-flag="{{ row_flag }}"
+                style="border-bottom:1px solid rgba(255,255,255,0.04);
+                       transition:background .15s;cursor:default;"
+                onmouseenter="this.style.background='var(--bg3)'"
+                onmouseleave="this.style.background=''">
+
+                {# Alumno #}
+                <td style="padding:12px 16px;font-family:'Rajdhani',system-ui,sans-serif;
+                           font-weight:600;color:var(--tx0);font-size:13px;white-space:nowrap;">
+                    {{ al.nombre_completo }}
+                </td>
+
+                {# Grupo #}
+                <td style="padding:12px 12px;font-family:'Share Tech Mono',monospace;
+                           font-size:11px;color:var(--tx2);">
+                    {{ al.grupo }}
+                </td>
+
+                {# Turno #}
+                <td style="padding:12px 12px;text-align:center;">
+                    {% if al.turno == 'mañana' %}
+                    <span style="font-size:11px;color:#f0a500;
+                                 font-family:'Share Tech Mono',monospace;">☀ Mañana</span>
+                    {% elif al.turno == 'tarde' %}
+                    <span style="font-size:11px;color:var(--acc);
+                                 font-family:'Share Tech Mono',monospace;">◑ Tarde</span>
+                    {% else %}
+                    <span style="font-size:11px;color:var(--tx2);
+                                 font-family:'Share Tech Mono',monospace;">⬡ Ambos</span>
+                    {% endif %}
+                </td>
+
+                {# Clases presentes #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Orbitron',monospace;font-weight:700;
+                           font-size:13px;color:#3de87a;">
+                    {{ al.clases_presentes }}
+                </td>
+
+                {# Clases ausentes #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Orbitron',monospace;font-weight:700;
+                           font-size:13px;color:{{ 'var(--danger-tx)' if al.clases_ausentes > 0 else 'var(--tx2)' }};">
+                    {{ al.clases_ausentes }}
+                </td>
+
+                {# Total clases #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--tx2);">
+                    {{ al.total_clases }}
+                </td>
+
+                {# Barra % asistencia #}
+                <td style="padding:10px 16px;min-width:120px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="flex:1;height:5px;border-radius:3px;
+                                    background:var(--bg3);border:1px solid var(--border);overflow:hidden;">
+                            <div style="height:100%;width:{{ pct }}%;border-radius:3px;
+                                        background:{{ bar_color }};
+                                        box-shadow:0 0 6px {{ bar_color }};
+                                        transition:width .4s ease;"></div>
+                        </div>
+                        <span style="font-family:'Orbitron',monospace;font-size:11px;
+                                     font-weight:700;color:{{ bar_color }};
+                                     min-width:36px;text-align:right;">{{ pct }}%</span>
+                    </div>
+                </td>
+
+                {# Días asistidos (columna día) #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Orbitron',monospace;font-weight:700;
+                           font-size:13px;color:#3de87a;
+                           border-left:1px solid var(--border);">
+                    {{ al.dias_asistidos }}
+                </td>
+
+                {# Días falta total #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Orbitron',monospace;font-weight:700;
+                           font-size:13px;
+                           color:{{ 'var(--danger-tx)' if al.dias_falta_total > 0 else 'var(--tx2)' }};">
+                    {{ al.dias_falta_total }}
+                    {% if al.dias_falta_total > 0 %}
+                    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;
+                                 color:var(--tx2);display:block;font-weight:400;margin-top:2px;">
+                        ({{ ((al.dias_falta_total / al.dias_con_clases) * 100) | round(0) | int if al.dias_con_clases > 0 else 0 }}% días)
+                    </span>
+                    {% endif %}
+                </td>
+
+                {# Total días con clases #}
+                <td style="padding:12px 12px;text-align:center;
+                           font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--tx2);">
+                    {{ al.dias_con_clases }}
+                </td>
+
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" style="padding:48px;text-align:center;
+                            font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--tx2);">
+                    No hay datos de asistencia acumulados todavía.<br>
+                    <span style="font-size:10px;opacity:.6;">
+                        Los datos se generan cada viernes al final de la jornada.
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        {# Pie de tabla: contador de filas visibles #}
+        <div style="padding:10px 18px;border-top:1px solid var(--border);
+                    display:flex;justify-content:space-between;align-items:center;">
+            <span id="contador-filas" style="font-family:'Share Tech Mono',monospace;
+                  font-size:10px;color:var(--tx2);letter-spacing:0.06em;">
+                {{ alumnos | length }} alumnos
+            </span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--tx2);
+                         opacity:.5;">
+                ¹ «Días aus. total» = días en que el alumno faltó a TODAS sus clases.
+            </span>
+        </div>
+    </div>
+</div>
+
+<style>
+.turno-btn {
+    background: transparent;
+    border: none;
+    color: var(--tx2);
+    padding: 7px 14px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    transition: background .15s, color .15s;
+}
+.turno-btn:hover  { background: var(--bg3); color: var(--tx0); }
+.turno-btn.active { background: var(--acc); color: #000; font-weight: 700; }
+</style>
+
+<script>
+// ── Estado de los filtros ─────────────────────────────────────────────────────
+let turnoActivo = 'todos';
+
+function setTurno(t) {
+    turnoActivo = t;
+    document.querySelectorAll('.turno-btn').forEach(b => b.classList.remove('active'));
+    const mapa = { todos: 'btn-todos', 'mañana': 'btn-manana', tarde: 'btn-tarde' };
+    document.getElementById(mapa[t])?.classList.add('active');
+    filtrar();
+}
+
+function filtrar() {
+    const texto       = (document.getElementById('busqueda').value || '').trim().toLowerCase();
+    const flagFiltro  = document.getElementById('filtro-faltas').value;
+    const filas       = document.querySelectorAll('tr.fila-alumno');
+    let visibles      = 0;
+
+    filas.forEach(tr => {
+        const turnoFila  = tr.dataset.turno  || '';
+        const nombreFila = tr.dataset.nombre || '';
+        const flagFila   = tr.dataset.flag   || '';
+
+        // Filtro turno: 'ambos' siempre pasa; de lo contrario debe coincidir
+        const pasaTurno = turnoActivo === 'todos'
+            || turnoFila === turnoActivo
+            || turnoFila === 'ambos';
+
+        // Filtro texto
+        const pasaTexto = !texto || nombreFila.includes(texto);
+
+        // Filtro faltas
+        const pasaFlag  = !flagFiltro || flagFila === flagFiltro;
+
+        const visible = pasaTurno && pasaTexto && pasaFlag;
+        tr.style.display = visible ? '' : 'none';
+        if (visible) visibles++;
+    });
+
+    document.getElementById('contador-filas').textContent =
+        visibles + ' alumno' + (visibles !== 1 ? 's' : '');
+}
+
+// Inicializar contador
+filtrar();
+</script>
+{% endblock %}

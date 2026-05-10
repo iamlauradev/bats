@@ -1,0 +1,50 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#003366', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
+flowchart TB
+    %% =========================================================================
+    %% ASISTENCIATOR IoT v2.4 — Arquitectura final (orientación VERTICAL)
+    %% Pensado para encajar en una hoja vertical de Google Docs.
+    %% =========================================================================
+
+    classDef hardware  fill:#001f3f,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef container fill:#0074D9,stroke:#fff,stroke-width:1.5px,color:#fff;
+    classDef database  fill:#7FDBFF,stroke:#001f3f,stroke-width:2px,color:#001f3f;
+    classDef external  fill:#eeeeee,stroke:#333,stroke-width:1px,color:#111,stroke-dasharray:5 5;
+    classDef cloud     fill:#f48120,stroke:#a25700,stroke-width:1.5px,color:#fff;
+
+    %% --- 1. USUARIOS ----------------------------------------------------------
+    Users(["Administrador/a · Tutor/a · Profesor/a"]):::external
+
+    %% --- 2. CLOUDFLARE --------------------------------------------------------
+    CF(["Cloudflare<br/>HTTPS + Tunnel"]):::cloud
+
+    %% --- 3. RPI + DOCKER STACK -----------------------------------------------
+    subgraph RPI [Raspberry Pi 4 B · Docker host]
+        direction TB
+        Cloudflared(["cloudflared<br/>Tunnel saliente"]):::container
+        Web(["web · Flask Python<br/>Escáner Bluetooth :5000"]):::container
+        Sched(["scheduler · Alpine + crond<br/>Gating cada N min"]):::container
+        DB[(asistenciator_db<br/>MariaDB 10.11 :3306)]:::database
+        BT(["Antena Bluetooth USB"]):::hardware
+
+        Cloudflared --> Web
+        Sched -->|/estado-franja<br/>/escanear| Web
+        Web <-->|CRUD asistencia| DB
+        Web -->|bluetoothctl / BlueZ| BT
+    end
+
+    %% --- 4. ALUMNOS / EDGE ---------------------------------------------------
+    Movil(["Móviles del alumnado<br/>(Bluetooth)"]):::external
+
+    %% --- 5. SERVICIOS EXTERNOS -----------------------------------------------
+    SMTP(["SMTP del centro<br/>Avisos a familias"]):::external
+    TG(["Telegram Bot API<br/>Alertas profesorado"]):::external
+
+    %% --- FLUJO PRINCIPAL VERTICAL --------------------------------------------
+    Users -->|Navegador HTTPS| CF
+    CF ==>|Túnel cifrado<br/>(sin abrir puertos)| Cloudflared
+    BT <-->|Pairing previo| Movil
+
+    %% --- INTEGRACIONES SALIENTES (laterales) ---------------------------------
+    Web ==>|SMTP TLS| SMTP
+    Web ==>|HTTPS API| TG
+    Sched -.->|Resumen turno| TG

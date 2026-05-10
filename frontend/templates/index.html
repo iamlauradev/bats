@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+
+{% block title %}Asistencia Hoy — Asistenciator{% endblock %}
+{% block page_title %}Asistencia en Tiempo Real{% endblock %}
+
+{% block content %}
+
+<!-- Cabecera de misión -->
+<div style="margin-bottom:24px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+
+        <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                <span style="font-family:'Share Tech Mono',monospace;font-size:9px;
+                             color:var(--acc);letter-spacing:0.15em;
+                             background:var(--acc-soft);border:1px solid var(--acc-border);
+                             padding:2px 10px;border-radius:2px;">
+                    {% if horario_activo %}&#9654; CLASE ACTIVA{% else %}// STANDBY{% endif %}
+                </span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:9px;
+                             color:var(--tx2);letter-spacing:0.1em;">
+                    {{ hoy | upper }}
+                </span>
+            </div>
+            <h2 style="font-family:'Orbitron',monospace;font-size:18px;font-weight:700;
+                       color:var(--tx0);margin:0 0 4px;letter-spacing:0.05em;">
+                {% if horario_activo %}
+                    <span style="color:var(--acc);text-shadow:0 0 12px var(--acc-glow);">
+                        {{ horario_activo.asignatura | upper }}
+                    </span>
+                {% else %}
+                    REGISTRO DEL DÍA
+                {% endif %}
+            </h2>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                      color:var(--tx2);margin:0;letter-spacing:0.06em;">
+                {% if ultimo_escaneo %}
+                    ÚLTIMO SCAN: <span style="color:var(--tx1);">{{ ultimo_escaneo }}</span>
+                    · MÉTODO: <span style="color:var(--acc);">{{ metodo_bt | upper }}</span>
+                {% else %}
+                    NO SE HA REALIZADO NINGÚN SCAN HOY
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            {% if escaneo_pausado %}
+                <button class="btn-scan pausado" disabled>
+                    <i class="bi bi-pause-fill"></i> SISTEMA PAUSADO
+                </button>
+                <button class="btn-pause reanudar" onclick="toggleEscaneo(false)">
+                    <i class="bi bi-play-fill"></i> REANUDAR
+                </button>
+            {% elif fuera_horario_escaneo %}
+                <button class="btn-scan pausado" disabled
+                        title="Estás fuera del horario de escaneo configurado">
+                    <i class="bi bi-moon"></i> FUERA DE HORARIO
+                </button>
+            {% else %}
+                <button id="btnEscanear" class="btn-scan" onclick="iniciarEscaneo()">
+                    <i class="bi bi-broadcast" id="btnIcono"></i>
+                    <span id="btnTexto">PASAR LISTA</span>
+                </button>
+                <button class="btn-pause" onclick="toggleEscaneo(true)">
+                    <i class="bi bi-pause-fill"></i> PAUSAR
+                </button>
+            {% endif %}
+
+            {# Sin botón CSV — los informes son el canal oficial de exportación #}
+        </div>
+    </div>
+</div>
+
+{% if es_fin_de_semana %}
+<div class="alert d-flex align-items-center gap-2 mb-4"
+     style="background:var(--acc-soft);border:1px solid var(--acc-border);
+            color:var(--acc);font-family:'Rajdhani',system-ui,sans-serif;
+            font-weight:600;border-radius:3px;">
+    <i class="bi bi-moon-stars-fill" style="color:var(--acc);font-size:16px;"></i>
+    <span>
+        SISTEMA EN REPOSO — No se realizan escaneos durante el fin de semana.
+        El sistema se activa automáticamente el próximo lunes.
+    </span>
+</div>
+{% endif %}
+
+{% if fuera_horario_escaneo and not escaneo_pausado and not es_fin_de_semana %}
+<div class="alert d-flex align-items-center gap-2 mb-4"
+     style="background:var(--muted-bg);border:1px solid var(--border);
+            color:var(--tx1);font-family:'Rajdhani',system-ui,sans-serif;
+            font-weight:600;border-radius:3px;">
+    <i class="bi bi-moon-stars" style="color:var(--tx2);"></i>
+    <span>
+        FUERA DE HORARIO DE ESCANEO —
+        {% if motivo_fuera_horario == 'turnos_desactivados' %}
+            ambos turnos están desactivados en
+        {% else %}
+            ahora mismo no hay ninguna ventana activa. Mañana
+            {% if ventanas_escaneo.manana_activo %}
+                ({{ ventanas_escaneo.manana_inicio }}–{{ ventanas_escaneo.manana_fin }})
+            {% else %}
+                desactivada
+            {% endif %}
+            · Tarde
+            {% if ventanas_escaneo.tarde_activo %}
+                ({{ ventanas_escaneo.tarde_inicio }}–{{ ventanas_escaneo.tarde_fin }})
+            {% else %}
+                desactivada
+            {% endif %}.
+            Edítalas en
+        {% endif %}
+        <a href="{{ url_for('configuracion') }}"
+           style="color:var(--acc);font-weight:700;text-decoration:underline;">
+            Configuración
+        </a>.
+    </span>
+</div>
+{% endif %}
+
+{% if override_activo %}
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-4"
+     style="font-family:'Rajdhani',system-ui,sans-serif;font-weight:600;border-radius:3px;">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>OVERRIDE MANUAL ACTIVO —
+        <a href="{{ url_for('gestion_horarios') }}"
+           style="color:inherit;font-weight:700;text-decoration:underline;">
+            Ir a Horarios
+        </a>
+        para desactivar.
+    </span>
+</div>
+{% endif %}
+
+<!-- Stats cards estilo pantalla de estado del jugador -->
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-sm-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--acc-soft);border-color:var(--acc-border);">
+                <i class="bi bi-people-fill" style="color:var(--acc);
+                   filter:drop-shadow(0 0 4px var(--acc));"></i>
+            </div>
+            <div>
+                <div class="stat-value" id="statTotal"
+                     style="color:var(--acc);text-shadow:0 0 10px var(--acc-glow);">{{ total }}</div>
+                <div class="stat-label">TOTAL</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-sm-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--success-bg);border-color:rgba(0,230,118,0.2);">
+                <i class="bi bi-check-circle-fill" style="color:var(--success-tx);
+                   filter:drop-shadow(0 0 4px var(--success-tx));"></i>
+            </div>
+            <div>
+                <div class="stat-value" id="statPresentes"
+                     style="color:var(--success-tx);">{{ presentes }}</div>
+                <div class="stat-label">PRESENTES</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-sm-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--danger-bg);border-color:rgba(255,82,82,0.2);">
+                <i class="bi bi-x-circle-fill" style="color:var(--danger-tx);
+                   filter:drop-shadow(0 0 4px var(--danger-tx));"></i>
+            </div>
+            <div>
+                <div class="stat-value" id="statAusentes"
+                     style="color:var(--danger-tx);">{{ ausentes }}</div>
+                <div class="stat-label">AUSENTES</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-sm-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:var(--muted-bg);border-color:var(--border);">
+                <i class="bi bi-dash-circle" style="color:var(--muted-tx);"></i>
+            </div>
+            <div>
+                <div class="stat-value" id="statSinDatos"
+                     style="color:var(--muted-tx);">{{ sin_datos }}</div>
+                <div class="stat-label">SIN DATOS</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de presencia estilo barra de HP/EXP -->
+{% if presentes + ausentes > 0 %}
+{% set escaneados = presentes + ausentes %}
+{% set pct = ((presentes / escaneados) * 100) | round(1) %}
+<div class="card mb-4" style="padding:16px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                     color:var(--tx2);letter-spacing:0.1em;">
+            TASA DE PRESENCIA
+        </span>
+        <span style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;
+                     color:{% if pct >= 80 %}var(--success-tx){% elif pct >= 50 %}var(--warning-tx){% else %}var(--danger-tx){% endif %};
+                     text-shadow:0 0 8px currentColor;">
+            {{ pct }}%
+        </span>
+    </div>
+    <!-- Barra exterior -->
+    <div style="height:8px;border-radius:2px;background:var(--bg3);
+                border:1px solid var(--border);overflow:hidden;position:relative;">
+        <div style="height:100%;width:{{ pct }}%;
+                    background:linear-gradient(90deg,
+                        {% if pct >= 80 %}var(--success-tx){% elif pct >= 50 %}var(--warning-tx){% else %}var(--danger-tx){% endif %},
+                        {% if pct >= 80 %}rgba(0,230,118,0.6){% elif pct >= 50 %}rgba(255,214,0,0.6){% else %}rgba(255,82,82,0.6){% endif %});
+                    border-radius:2px;
+                    box-shadow:0 0 8px currentColor;
+                    transition:width 0.6s ease;
+                    position:relative;">
+            <!-- Efecto de brillo en la barra -->
+            <div style="position:absolute;top:0;left:0;right:0;height:50%;
+                        background:rgba(255,255,255,0.15);border-radius:2px 2px 0 0;"></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ── Macro para renderizar una tabla de alumnos ── #}
+{% macro tabla_alumnos(lista, tabla_id) %}
+<table class="table table-hover mb-0" id="{{ tabla_id }}">
+    <thead>
+        <tr>
+            <th style="width:44px;"></th>
+            <th>Alumno/a</th>
+            <th class="d-none d-lg-table-cell">Actualización</th>
+            <th style="text-align:right;">Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if lista %}
+            {% for alumno in lista %}
+            <tr data-mac="{{ 'con' if alumno.mac_bluetooth else 'sin' }}"
+                data-apellido="{{ alumno.apellidos | lower }}"
+                data-estado="{{ alumno.estado_actual or 'SIN_DATOS' }}">
+                <td>
+                    <div class="student-avatar"
+                         style="background:{{ alumno.nombre_completo | color_avatar }};
+                                box-shadow:0 0 8px {{ alumno.nombre_completo | color_avatar }}40;">
+                        {{ alumno.nombre_completo | iniciales }}
+                    </div>
+                </td>
+                <td>
+                    <span class="student-name">{{ alumno.nombre_completo }}</span>
+                    <div style="font-family:'Share Tech Mono',monospace;
+                                font-size:10px;color:var(--tx2);margin-top:2px;">
+                        {{ alumno.grupo }}
+                    </div>
+                </td>
+                <td class="d-none d-lg-table-cell"
+                    style="font-family:'Share Tech Mono',monospace;
+                           color:var(--tx2);font-size:10px;letter-spacing:0.03em;">
+                    {{ alumno.ultima_actualizacion or '—' }}
+                </td>
+                <td style="text-align:right;">
+                    <div class="d-flex gap-1 align-items-center justify-content-end flex-wrap">
+                        {% if alumno.estado_actual == 'PRESENTE' %}
+                            <span class="badge-presente">
+                                <i class="bi bi-check-lg"></i>PRESENTE
+                            </span>
+                        {% elif alumno.estado_actual == 'AUSENTE' %}
+                            <span class="badge-ausente">
+                                <i class="bi bi-x-lg"></i>AUSENTE
+                            </span>
+                            {% if alumno.notificado %}
+                                <span class="badge-notificado">
+                                    <i class="bi bi-bell-fill"></i>ALERT
+                                </span>
+                            {% endif %}
+                            {% if current_user.es_tutor %}
+                            <form action="{{ url_for('notificar_tutor', id_alumno=alumno.id_alumno) }}"
+                                  method="POST" class="d-inline"
+                                  onsubmit="return confirm('¿Enviar correo al tutor/a legal de {{ alumno.nombre_completo }}?')">
+                                <button type="submit"
+                                        style="border-radius:2px;font-family:'Rajdhani',system-ui,sans-serif;
+                                               font-size:11px;font-weight:700;letter-spacing:0.04em;
+                                               border:1px solid var(--acc-border);color:var(--acc);
+                                               background:var(--acc-soft);padding:3px 8px;cursor:pointer;"
+                                        title="Notificar al tutor/a legal">
+                                    <i class="bi bi-envelope me-1"></i>NOTIF.
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge-sin-datos">
+                                <i class="bi bi-dash"></i>---
+                            </span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            <p>
+                                <span style="font-family:'Orbitron',monospace;font-size:12px;
+                                             color:var(--acc);display:block;margin-bottom:6px;">
+                                    SIN ALUMNOS EN ESTE TURNO
+                                </span>
+                                <a href="{{ url_for('gestion_alumnos') }}"
+                                   style="color:var(--acc);text-decoration:underline;">
+                                    Ir a Alumnos/as
+                                </a>
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endmacro %}
+
+{# ─── Filtros globales (aplicados a ambos paneles) ─── #}
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+    <select id="filtroMac" onchange="aplicarFiltros()"
+            style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                   background:var(--bg2);border:1px solid var(--border);
+                   color:var(--tx1);padding:5px 10px;border-radius:3px;
+                   letter-spacing:0.04em;cursor:pointer;">
+        <option value="">◈ CON/SIN MAC</option>
+        <option value="con">🔵 CON MAC</option>
+        <option value="sin">⚪ SIN MAC</option>
+    </select>
+    <select id="filtroOrden" onchange="aplicarFiltros()"
+            style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                   background:var(--bg2);border:1px solid var(--border);
+                   color:var(--tx1);padding:5px 10px;border-radius:3px;
+                   letter-spacing:0.04em;cursor:pointer;">
+        <option value="apellido">↑ A–Z APELLIDO</option>
+        <option value="apellido_desc">↓ Z–A APELLIDO</option>
+        <option value="estado">⚡ ESTADO</option>
+    </select>
+    <button onclick="resetFiltros()"
+            style="font-family:'Share Tech Mono',monospace;font-size:11px;
+                   background:transparent;border:1px solid var(--border);
+                   color:var(--tx2);padding:5px 10px;border-radius:3px;
+                   letter-spacing:0.04em;cursor:pointer;">
+        ✕ RESET
+    </button>
+</div>
+
+{# ─── Dos paneles lado a lado ─── #}
+<div class="row g-3">
+    {# Panel Mañana #}
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div style="padding:14px 18px 10px;border-bottom:1px solid var(--border);
+                        display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="bi bi-sunrise-fill"
+                       style="color:#fbbf24;font-size:15px;
+                              filter:drop-shadow(0 0 4px rgba(251,191,36,0.5));"></i>
+                    <span style="font-family:'Orbitron',monospace;font-size:11px;
+                                 font-weight:700;color:var(--tx0);letter-spacing:0.08em;">
+                        TURNO MAÑANA
+                    </span>
+                </div>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                             color:var(--tx2);" id="cntManana">
+                    {{ alumnos_manana | length }} alumnos
+                </span>
+            </div>
+            <div class="card-body p-0">
+                {{ tabla_alumnos(alumnos_manana, 'tablaManana') }}
+            </div>
+        </div>
+    </div>
+
+    {# Panel Tarde #}
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div style="padding:14px 18px 10px;border-bottom:1px solid var(--border);
+                        display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="bi bi-sunset-fill"
+                       style="color:#a78bfa;font-size:15px;
+                              filter:drop-shadow(0 0 4px rgba(167,139,250,0.5));"></i>
+                    <span style="font-family:'Orbitron',monospace;font-size:11px;
+                                 font-weight:700;color:var(--tx0);letter-spacing:0.08em;">
+                        TURNO TARDE
+                    </span>
+                </div>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                             color:var(--tx2);" id="cntTarde">
+                    {{ alumnos_tarde | length }} alumnos
+                </span>
+            </div>
+            <div class="card-body p-0">
+                {{ tabla_alumnos(alumnos_tarde, 'tablasTarde') }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function iniciarEscaneo() {
+    const btn   = document.getElementById('btnEscanear');
+    const icono = document.getElementById('btnIcono');
+    const texto = document.getElementById('btnTexto');
+    btn.disabled = true;
+    btn.classList.add('scanning');
+    icono.outerHTML = '<div class="spinner" id="btnIcono"></div>';
+    texto.textContent = 'ESCANEANDO\xe2\x80\xa6';
+
+    fetch('/escanear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(r => {
+        if (r.status === 409) { alert('Ya hay un escaneo en curso.'); window.location.reload(); return null; }
+        if (r.status === 423) {
+            // Pausado, recreo, o fuera de horario configurado
+            return r.json().then(d => { alert(d.mensaje || 'No se puede escanear ahora.'); window.location.reload(); return null; });
+        }
+        return r.json();
+    })
+    .then(data => { if (data && data.status === 'ok') setTimeout(() => window.location.reload(), 400); })
+    .catch(() => { alert('Error de conexi\xc3\xb3n.'); window.location.reload(); });
+}
+
+function toggleEscaneo(pausar) {
+    if (!confirm(pausar ? 'Pausar el sistema de escaneo?' : 'Reanudar el sistema de escaneo?')) return;
+    fetch('/configuracion/escaneo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pausado: pausar })
+    }).then(r => r.json()).then(() => window.location.reload())
+      .catch(() => alert('Error al cambiar el estado.'));
+}
+
+// ── Filtros del dashboard (aplican a ambos paneles) ────────────────
+const ordenEstado = { 'AUSENTE': 0, 'SIN_DATOS': 1, 'PRESENTE': 2 };
+
+function filtrarTabla(tablaId) {
+    const mac   = document.getElementById('filtroMac')?.value   || '';
+    const orden = document.getElementById('filtroOrden')?.value || 'apellido';
+    const tbody = document.querySelector(`#${tablaId} tbody`);
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr[data-apellido]'));
+    filas.forEach(f => {
+        const visible = !mac || f.dataset.mac === mac;
+        f.style.display = visible ? '' : 'none';
+    });
+
+    const visibles = filas.filter(f => f.style.display !== 'none');
+    visibles.sort((a, b) => {
+        if (orden === 'estado') {
+            const ea = ordenEstado[a.dataset.estado] ?? 1;
+            const eb = ordenEstado[b.dataset.estado] ?? 1;
+            if (ea !== eb) return ea - eb;
+        }
+        const cmp = a.dataset.apellido.localeCompare(b.dataset.apellido, 'es');
+        return orden === 'apellido_desc' ? -cmp : cmp;
+    });
+    visibles.forEach(f => tbody.appendChild(f));
+}
+
+function aplicarFiltros() {
+    filtrarTabla('tablaManana');
+    filtrarTabla('tablasTarde');
+}
+
+function resetFiltros() {
+    const mac   = document.getElementById('filtroMac');
+    const orden = document.getElementById('filtroOrden');
+    if (mac)   mac.value   = '';
+    if (orden) orden.value = 'apellido';
+    aplicarFiltros();
+}
+
+// ── Auto-refresh inteligente ──────────────────────────────────────────
+// Sondea cada 15s al endpoint /api/dashboard-estado. Si detecta que el
+// timestamp del último escaneo, el estado pausado o la ventana horaria
+// han cambiado desde el render del servidor, recarga la página. Mientras
+// no haya cambios la página NO se recarga, así no perdemos los filtros
+// que el usuario haya elegido.
+(function () {
+    const ULT_INICIAL  = "{{ (ultimo_escaneo or '')|string }}";
+    const PAUS_INICIAL = {{ 'true' if escaneo_pausado else 'false' }};
+    const FUERA_INICIAL = {{ 'true' if fuera_horario_escaneo else 'false' }};
+
+    let recargando = false;
+
+    async function consultar() {
+        if (recargando) return;
+        if (document.hidden) return;  // no machacar la red si la pestaña no está visible
+        try {
+            const r = await fetch('/api/dashboard-estado', { credentials: 'same-origin' });
+            if (!r.ok) return;
+            const d = await r.json();
+            const cambioUltimo = d.ultimo_escaneo  !== ULT_INICIAL;
+            const cambioPaus   = d.escaneo_pausado !== PAUS_INICIAL;
+            const cambioFuera  = d.fuera_horario   !== FUERA_INICIAL;
+            if (cambioUltimo || cambioPaus || cambioFuera) {
+                recargando = true;
+                window.location.reload();
+            }
+        } catch (e) {
+            // Silencioso: si el servidor está caído seguiremos intentando
+        }
+    }
+
+    // Primer chequeo a los 15s, luego cada 15s
+    setInterval(consultar, 15000);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Asignaturas — Asistenciator{% endblock %}
+{% block page_title %}Gestión de Asignaturas{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0;color:var(--tx0);">
+            <i class="bi bi-book-fill me-2" style="color:var(--acc);"></i>
+            Asignaturas
+        </h2>
+        <p style="font-size:13px;color:var(--tx1);margin:4px 0 0;">
+            Cada asignatura puede tener uno o varios profesores/as asignados.
+        </p>
+    </div>
+    <button class="btn-scan" data-bs-toggle="modal" data-bs-target="#modalCrearAsignatura">
+        <i class="bi bi-plus-lg"></i> Nueva Asignatura
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Profesores/as</th>
+                    <th style="text-align:right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if asignaturas %}
+                    {% for asig in asignaturas %}
+                    <tr>
+                        <td>
+                            <span class="student-name">{{ asig.nombre }}</span>
+                        </td>
+                        <td style="font-size:13px;color:var(--tx1);">
+                            {% if asig.profesores %}
+                                {% for prof in asig.profesores %}
+                                    <span style="display:inline-flex;align-items:center;gap:5px;
+                                                 background:var(--bg3);border-radius:20px;
+                                                 padding:3px 10px;margin:2px;font-size:12px;">
+                                        <i class="bi bi-person" style="color:var(--acc);"></i>
+                                        {{ prof.nombre }}
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color:var(--tx2);">Sin profesores asignados</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditarAsig{{ asig.id_asignatura }}"
+                                        style="border-radius:7px;font-size:12px;border-color:var(--border);color:var(--tx1);">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                {% if current_user.es_admin %}
+                                <form action="{{ url_for('delete_asignatura', id_asignatura=asig.id_asignatura) }}"
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirm('¿Eliminar la asignatura {{ asig.nombre }}?\nSe eliminarán también sus franjas horarias.')">
+                                    <button type="submit" class="btn btn-sm"
+                                            style="border-radius:7px;font-size:12px;
+                                                   border:1px solid var(--danger-tx);
+                                                   color:var(--danger-tx);background:transparent;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">
+                                <i class="bi bi-book"></i>
+                                <p><strong>No hay asignaturas creadas.</strong><br>
+                                   Pulsa "Nueva Asignatura" para empezar.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     MODALES DE EDICIÓN
+============================================================ -->
+{% for asig in asignaturas %}
+<div class="modal fade" id="modalEditarAsig{{ asig.id_asignatura }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="font-size:15px;color:var(--tx0);">
+                    Editar asignatura
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('edit_asignatura', id_asignatura=asig.id_asignatura) }}" method="POST">
+                <div class="modal-body" style="padding:22px 26px;">
+                    <div class="mb-4">
+                        <label class="form-label">Nombre de la asignatura</label>
+                        <input type="text" name="nombre" class="form-control"
+                               value="{{ asig.nombre }}" required>
+                    </div>
+
+                    <label class="form-label">Profesores/as asignados</label>
+                    {% if profesores %}
+                        <div style="background:var(--bg0);border:1px solid var(--border);
+                                    border-radius:10px;padding:12px 16px;max-height:220px;overflow-y:auto;">
+                            {% for prof in profesores %}
+                            {% set ya_asignado = asig.profesores | selectattr('id_usuario','equalto', prof.id_usuario) | list | length > 0 %}
+                            <div class="form-check" style="margin-bottom:8px;">
+                                <input class="form-check-input" type="checkbox"
+                                       name="id_profesores" value="{{ prof.id_usuario }}"
+                                       id="ep_{{ asig.id_asignatura }}_{{ prof.id_usuario }}"
+                                       {{ 'checked' if ya_asignado else '' }}>
+                                <label class="form-check-label"
+                                       for="ep_{{ asig.id_asignatura }}_{{ prof.id_usuario }}"
+                                       style="font-size:14px;color:var(--tx0);cursor:pointer;">
+                                    {{ prof.nombre }}
+                                    <span style="font-size:11px;color:var(--tx2);">({{ prof.rol }})</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="font-size:13px;color:var(--tx2);padding:10px;">
+                            No hay usuarios con rol Profesor/a creados.
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:9px 20px;font-size:13px;">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<!-- ============================================================
+     MODAL CREAR ASIGNATURA
+============================================================ -->
+<div class="modal fade" id="modalCrearAsignatura" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"
+                 style="background:linear-gradient(135deg,var(--acc-dark),var(--acc));border:none;">
+                <h5 class="modal-title" style="font-size:15px;color:#fff;">
+                    <i class="bi bi-book me-2"></i>Nueva Asignatura
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_asignatura') }}" method="POST">
+                <div class="modal-body" style="padding:22px 26px;">
+
+                    {% if not profesores %}
+                    <div class="alert alert-warning" style="border-radius:10px;font-size:13px;border:none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No hay usuarios con rol Profesor/a. Ve a
+                        <a href="{{ url_for('gestion_usuarios') }}" style="color:inherit;font-weight:700;">Usuarios</a>
+                        y crea al menos uno.
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label">Nombre de la asignatura</label>
+                        <input type="text" name="nombre" class="form-control" required
+                               placeholder="Ej: Redes Locales"
+                               {{ 'disabled' if not profesores else '' }}>
+                    </div>
+
+                    <label class="form-label">Profesores/as que la imparten</label>
+                    {% if profesores %}
+                        <div style="background:var(--bg0);border:1px solid var(--border);
+                                    border-radius:10px;padding:12px 16px;max-height:220px;overflow-y:auto;">
+                            {% for prof in profesores %}
+                            <div class="form-check" style="margin-bottom:8px;">
+                                <input class="form-check-input" type="checkbox"
+                                       name="id_profesores" value="{{ prof.id_usuario }}"
+                                       id="np_{{ prof.id_usuario }}">
+                                <label class="form-check-label" for="np_{{ prof.id_usuario }}"
+                                       style="font-size:14px;color:var(--tx0);cursor:pointer;">
+                                    {{ prof.nombre }}
+                                    <span style="font-size:11px;color:var(--tx2);">({{ prof.rol }})</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text mt-2">Puedes seleccionar varios (titular + apoyo).</div>
+                    {% else %}
+                        <div style="background:var(--bg0);border:1px solid var(--border);border-radius:10px;
+                                    padding:12px 16px;font-size:13px;color:var(--tx2);">
+                            Sin profesores disponibles
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                            style="border:1px solid var(--border);color:var(--tx1);background:transparent;border-radius:8px;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-scan" style="padding:9px 20px;font-size:13px;"
+                            {{ 'disabled' if not profesores else '' }}>
+                        <i class="bi bi-plus-lg me-1"></i>Crear Asignatura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

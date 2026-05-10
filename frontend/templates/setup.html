@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Configuración Inicial — Asistenciator</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root, [data-theme="dark"] {
+            --bg0:#16161d; --bg1:#1e1e27; --bg2:#24242f; --bg3:#2c2c3a;
+            --border:#32323f;
+            --acc:#a855f7; --acc-dark:#4D118F;
+            --acc-soft:rgba(168,85,247,0.15); --acc-border:rgba(168,85,247,0.35);
+            --tx0:#f0f0f6; --tx1:#9090a8; --tx2:#50506a;
+            --danger-tx:#f87171; --warning-tx:#facc15;
+        }
+        [data-theme="light"] {
+            --bg0:#f2f2f7; --bg1:#ffffff; --bg2:#f8f8fb; --bg3:#ededf4;
+            --border:#e0e0ec;
+            --acc:#4D118F; --acc-dark:#3a0a6e;
+            --acc-soft:rgba(77,17,143,0.08); --acc-border:rgba(77,17,143,0.25);
+            --tx0:#1a1a2e; --tx1:#5a5a78; --tx2:#9898b8;
+            --danger-tx:#b91c1c; --warning-tx:#854d0e;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin:0; min-height:100vh;
+            font-family:'Outfit',system-ui,sans-serif;
+            background:var(--bg0); color:var(--tx0);
+            display:flex; align-items:center;
+            justify-content:center; padding:24px 16px;
+            transition:background .25s;
+        }
+
+        .setup-wrapper {
+            width:100%; max-width:480px;
+            background:var(--bg1); border-radius:18px; overflow:hidden;
+            box-shadow:0 8px 48px rgba(0,0,0,0.35);
+            border:1px solid var(--border); position:relative;
+        }
+
+        .theme-btn {
+            position:absolute; top:14px; right:14px;
+            width:32px; height:32px; border-radius:8px;
+            background:var(--bg2); border:1px solid var(--border);
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; color:var(--tx1); font-size:14px;
+            transition:all .15s; z-index:10;
+        }
+        .theme-btn:hover { color:var(--acc); border-color:var(--acc-border); }
+
+        .setup-header {
+            background:#13131a; padding:32px 36px 28px;
+            text-align:center; position:relative; overflow:hidden;
+        }
+
+        .setup-header::after {
+            content:''; position:absolute; bottom:-40px; right:-40px;
+            width:160px; height:160px; border-radius:50%;
+            border:30px solid rgba(168,85,247,0.06);
+        }
+
+        .setup-icon {
+            width: 200px; aspect-ratio: 3 / 2;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto 18px;
+            border: 1px solid var(--acc-border);
+            box-shadow: 0 0 24px rgba(0,0,0,0.4);
+        }
+
+        .setup-icon img { width:100%; height:100%; object-fit:cover; display:block; }
+
+        .setup-header h1 {
+            font-size:1.1rem; font-weight:700; color:#f0f0f6; margin:0 0 6px;
+        }
+
+        .setup-header p {
+            font-size:12px; color:rgba(255,255,255,0.3); margin:0; line-height:1.5;
+        }
+
+        .setup-banner {
+            margin:20px 28px 0;
+            background:rgba(250,204,21,0.08);
+            border:1px solid rgba(250,204,21,0.2);
+            border-radius:10px; padding:12px 14px;
+            font-size:13px; color:var(--warning-tx);
+            display:flex; gap:10px; align-items:flex-start;
+        }
+
+        .setup-banner i { margin-top:1px; flex-shrink:0; }
+
+        .setup-form { padding:20px 28px 32px; }
+
+        .section-sep {
+            font-size:10px; font-weight:700; text-transform:uppercase;
+            letter-spacing:.08em; color:var(--tx2); margin:20px 0 12px;
+        }
+
+        .form-label { font-size:13px; font-weight:600; color:var(--tx1); margin-bottom:6px; }
+
+        .form-control {
+            background:var(--bg0); border:1.5px solid var(--border);
+            color:var(--tx0); border-radius:10px; font-size:14px;
+            padding:11px 14px 11px 40px;
+            font-family:'Outfit',system-ui,sans-serif;
+            transition:border-color .15s,box-shadow .15s,background .25s;
+        }
+
+        .form-control:focus {
+            background:var(--bg0); border-color:var(--acc); color:var(--tx0);
+            box-shadow:0 0 0 3px var(--acc-soft); outline:none;
+        }
+
+        .form-control::placeholder { color:var(--tx2); }
+        .form-control.no-icon { padding-left:14px; }
+
+        .input-wrap { position:relative; }
+
+        .input-wrap i {
+            position:absolute; left:13px; top:50%;
+            transform:translateY(-50%); color:var(--tx2);
+            font-size:15px; pointer-events:none;
+        }
+
+        hr { border-color:var(--border); margin:20px 0; }
+
+        .btn-setup {
+            width:100%; background:var(--acc); color:#fff;
+            border:none; padding:13px; border-radius:10px;
+            font-size:14px; font-weight:600;
+            font-family:'Outfit',system-ui,sans-serif;
+            cursor:pointer; transition:all .2s; margin-top:6px;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+
+        .btn-setup:hover {
+            background:var(--acc-dark); transform:translateY(-1px);
+            box-shadow:0 4px 16px rgba(168,85,247,0.3);
+        }
+
+        .alert {
+            border-radius:10px; font-size:13px;
+            border:1px solid; padding:10px 14px;
+        }
+
+        .alert-danger { background:rgba(239,68,68,0.1); color:var(--danger-tx); border-color:rgba(239,68,68,0.2); }
+        .alert-info   { background:var(--acc-soft); color:var(--acc); border-color:var(--acc-border); }
+    </style>
+</head>
+<body>
+
+<div class="setup-wrapper">
+
+    <div class="theme-btn" onclick="toggleTheme()">
+        <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+    </div>
+
+    <div class="setup-header">
+        <div class="setup-icon">
+            <img src="{{ url_for('static', filename='img/asistenciator_logo.png') }}"
+                 alt="Asistenciator">
+        </div>
+        <h1>Asistenciator — Primer arranque</h1>
+        <p>Crea la cuenta de administrador para<br>poner en marcha el sistema.</p>
+    </div>
+
+    <div class="setup-banner">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Esta página solo está disponible una vez, mientras no exista ningún usuario.
+        Tras crear la cuenta de administrador quedará inaccesible.</span>
+    </div>
+
+    <div class="setup-form">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mt-2">
+                    <i class="bi bi-exclamation-circle me-2"></i>{{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('setup') }}">
+            <!-- Token CSRF (setup.html no extiende base.html) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <p class="section-sep">Datos del administrador</p>
+
+            <div class="mb-3">
+                <label class="form-label" for="nombre">Nombre completo</label>
+                <div class="input-wrap">
+                    <i class="bi bi-person"></i>
+                    <input type="text" id="nombre" name="nombre" class="form-control"
+                           required placeholder="Ej: Ana García" autocomplete="name">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="email">Email</label>
+                <div class="input-wrap">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" id="email" name="email" class="form-control"
+                           required placeholder="admin@ies-ejemplo.es" autocomplete="email">
+                </div>
+            </div>
+
+            <hr>
+            <p class="section-sep">Contraseña</p>
+
+            <div class="mb-3">
+                <label class="form-label" for="contrasena">Contraseña</label>
+                <div class="input-wrap">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="contrasena" name="contrasena"
+                           class="form-control" required minlength="8"
+                           placeholder="Mínimo 8 caracteres"
+                           autocomplete="new-password">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" for="confirmacion">Confirmar contraseña</label>
+                <div class="input-wrap">
+                    <i class="bi bi-lock-fill"></i>
+                    <input type="password" id="confirmacion" name="confirmacion"
+                           class="form-control" required minlength="8"
+                           placeholder="Repite la contraseña"
+                           autocomplete="new-password">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-setup">
+                <i class="bi bi-check-circle"></i>
+                Crear administrador e iniciar sistema
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    const saved = localStorage.getItem('asistenciator-theme') || 'dark';
+    applyTheme(saved);
+})();
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = theme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+    localStorage.setItem('asistenciator-theme', theme);
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+</script>
+
+</body>
+</html>

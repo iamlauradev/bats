@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Error — Asistenciator{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/asistenciator_logo.png') }}">
+
+    <style>
+        :root {
+            --bg0:        #060a12;
+            --bg1:        #090e1a;
+            --bg2:        #0d1422;
+            --bg3:        #111b2e;
+            --border:     #1a2a44;
+            --acc:        #4fc3f7;
+            --acc-border: rgba(79,195,247,0.3);
+            --acc-glow:   rgba(79,195,247,0.5);
+            --tx0:        #e8f4fd;
+            --tx1:        #7bafd4;
+            --tx2:        #3d6080;
+            --danger-bg:  rgba(255,82,82,0.08);
+            --danger-tx:  #ff5252;
+            --warning-bg: rgba(255,214,0,0.08);
+            --warning-tx: #ffd600;
+            --surface:    #060a12;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { font-size: 16px; }
+
+        body {
+            margin: 0;
+            font-family: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+            background: var(--surface);
+            color: var(--tx0);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.01em;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(79,195,247,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79,195,247,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .error-wrapper {
+            text-align: center;
+            max-width: 580px;
+            width: 100%;
+            padding: 40px 24px;
+        }
+
+        .btn-error {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1.5px solid var(--acc-border);
+            color: var(--acc);
+            padding: 10px 22px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .btn-error:hover {
+            background: rgba(79,195,247,0.08);
+            box-shadow: 0 0 12px rgba(79,195,247,0.2);
+            color: var(--acc);
+        }
+
+        .d-flex { display: flex; }
+        .gap-3   { gap: 1rem; }
+        .justify-content-center { justify-content: center; }
+        .flex-wrap { flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="error-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SYSTEM — Asistenciator{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/asistenciator_logo.png') }}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        /* =====================================================
+           SISTEMA DE TEMAS — Solo Leveling UI
+        ===================================================== */
+        :root,
+        [data-theme="dark"] {
+            --bg0:        #060a12;
+            --bg1:        #090e1a;
+            --bg2:        #0d1422;
+            --bg3:        #111b2e;
+            --border:     #1a2a44;
+            --border-glow:rgba(79,195,247,0.25);
+            --acc:        #4fc3f7;
+            --acc2:       #0288d1;
+            --acc-dark:   #01579b;
+            --acc-soft:   rgba(79,195,247,0.08);
+            --acc-border: rgba(79,195,247,0.3);
+            --acc-glow:   rgba(79,195,247,0.5);
+            --tx0:        #e8f4fd;
+            --tx1:        #7bafd4;
+            --tx2:        #3d6080;
+            --success-bg: rgba(0,230,118,0.08);
+            --success-tx: #00e676;
+            --danger-bg:  rgba(255,82,82,0.08);
+            --danger-tx:  #ff5252;
+            --warning-bg: rgba(255,214,0,0.08);
+            --warning-tx: #ffd600;
+            --muted-bg:   #0d1422;
+            --muted-tx:   #3d6080;
+            --sidebar-bg: #04070f;
+            --topbar-bg:  #060a12;
+            --card-bg:    #090e1a;
+            --surface:    #060a12;
+            --shadow:     0 2px 20px rgba(0,0,0,0.7);
+            --shadow-glow:0 0 20px rgba(79,195,247,0.15);
+            --rank-s:     #ffd600;
+            --rank-a:     #e040fb;
+            --rank-b:     #4fc3f7;
+        }
+
+        [data-theme="light"] {
+            --bg0:        #e8f4fd;
+            --bg1:        #ffffff;
+            --bg2:        #f0f8ff;
+            --bg3:        #dceefb;
+            --border:     #b3d9f2;
+            --border-glow:rgba(2,136,209,0.2);
+            --acc:        #0288d1;
+            --acc2:       #01579b;
+            --acc-dark:   #003f6b;
+            --acc-soft:   rgba(2,136,209,0.08);
+            --acc-border: rgba(2,136,209,0.3);
+            --acc-glow:   rgba(2,136,209,0.4);
+            --tx0:        #0d1b2a;
+            --tx1:        #2a5278;
+            --tx2:        #7aaac8;
+            --success-bg: rgba(0,150,70,0.08);
+            --success-tx: #007a3a;
+            --danger-bg:  rgba(200,30,30,0.08);
+            --danger-tx:  #c0392b;
+            --warning-bg: rgba(180,130,0,0.08);
+            --warning-tx: #8a6000;
+            --muted-bg:   #dceefb;
+            --muted-tx:   #7aaac8;
+            --sidebar-bg: #04070f;
+            --topbar-bg:  #ffffff;
+            --card-bg:    #ffffff;
+            --surface:    #e8f4fd;
+            --shadow:     0 2px 12px rgba(0,0,0,0.08);
+            --shadow-glow:0 0 12px rgba(2,136,209,0.1);
+            --rank-s:     #b8860b;
+            --rank-a:     #7b1fa2;
+            --rank-b:     #0288d1;
+        }
+
+        /* =====================================================
+           BASE
+        ===================================================== */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { font-size: 16px; }
+
+        body {
+            margin: 0;
+            font-family: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+            background: var(--surface);
+            color: var(--tx0);
+            font-size: 1rem;
+            transition: background 0.25s, color 0.25s;
+            letter-spacing: 0.01em;
+        }
+
+        /* Fondo con efecto de partículas/grid estilo SL */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(79,195,247,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79,195,247,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        [data-theme="light"] body::before { display: none; }
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            border-right: 1px solid var(--border);
+            box-shadow: 4px 0 30px rgba(0,0,0,0.5), inset -1px 0 0 rgba(79,195,247,0.05);
+        }
+
+        .sidebar-logo {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+        }
+
+        .sidebar-logo::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 20px; right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--acc), transparent);
+            opacity: 0.4;
+        }
+
+        .sidebar-logo-icon {
+            width: 44px; height: 44px;
+            border-radius: 8px;
+            background: var(--acc-soft);
+            border: 1px solid var(--acc-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px var(--acc-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-logo-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(79,195,247,0.15));
+        }
+
+        .sidebar-logo-icon svg { width: 24px; height: 24px; filter: drop-shadow(0 0 4px var(--acc)); }
+
+        .sidebar-logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Enseña la cabeza del robot, recortando el texto inferior del logo */
+            object-position: center 18%;
+            transform: scale(1.6);
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-logo-text .app-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--acc);
+            margin: 0 0 2px;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 10px var(--acc-glow);
+        }
+
+        .sidebar-logo-text .app-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--tx2);
+            margin: 0;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .sidebar-section {
+            padding: 16px 20px 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--tx2);
+            position: relative;
+        }
+
+        .sidebar-section::before {
+            content: '//';
+            margin-right: 6px;
+            color: var(--acc);
+            opacity: 0.5;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+
+        .sidebar-nav::-webkit-scrollbar { width: 2px; }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--acc-border);
+            border-radius: 2px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 20px;
+            color: var(--tx2);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            letter-spacing: 0.03em;
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--acc-soft);
+            color: var(--tx0);
+            border-left-color: var(--acc-border);
+        }
+
+        .sidebar-nav a.active {
+            background: linear-gradient(90deg, var(--acc-soft) 0%, transparent 100%);
+            color: var(--acc);
+            border-left-color: var(--acc);
+            text-shadow: 0 0 8px var(--acc-glow);
+        }
+
+        .sidebar-nav a.active i {
+            filter: drop-shadow(0 0 4px var(--acc));
+        }
+
+        .sidebar-nav a i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* Pestañas a las que el rol actual no tiene acceso: visibles pero
+           atenuadas, con un candadito al lado. Al pulsarlas el backend
+           devuelve 403 ("YOU SHALL NOT PASS"). */
+        .sidebar-nav a.nav-locked {
+            color: var(--tx2);
+            opacity: 0.55;
+        }
+        .sidebar-nav a.nav-locked:hover {
+            background: rgba(255,82,82,0.05);
+            color: var(--danger-tx);
+            border-left-color: rgba(255,82,82,0.4);
+            opacity: 0.85;
+        }
+        .nav-lock-icon {
+            margin-left: auto;
+            font-size: 11px !important;
+            color: var(--danger-tx) !important;
+            opacity: 0.7;
+        }
+        .sidebar-nav a.nav-locked:hover .nav-lock-icon {
+            opacity: 1;
+            filter: drop-shadow(0 0 4px var(--danger-tx));
+        }
+
+        .nav-badge-live {
+            margin-left: auto;
+            background: var(--acc-soft);
+            color: var(--acc);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-weight: 700;
+            border: 1px solid var(--acc-border);
+            letter-spacing: 0.1em;
+            animation: pulse-nav 1.5s infinite;
+            box-shadow: 0 0 8px var(--acc-soft);
+        }
+
+        @keyframes pulse-nav {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--acc-glow); }
+            50%       { opacity: 0.6; box-shadow: none; }
+        }
+
+        .sidebar-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--tx2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.05em;
+        }
+
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--success-tx);
+            box-shadow: 0 0 8px var(--success-tx);
+            flex-shrink: 0;
+            animation: pulse-nav 2s infinite;
+        }
+
+        .status-dot.pausado {
+            background: var(--warning-tx);
+            box-shadow: 0 0 8px var(--warning-tx);
+        }
+
+        /* =====================================================
+           CONTENIDO PRINCIPAL
+        ===================================================== */
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* OJO: no añadir position:relative con z-index aquí. Crearía un
+               stacking context que atrapa los modales de Bootstrap por debajo
+               de su propio backdrop (que se inyecta directo en <body>) y los
+               clics aterrizan en el backdrop en vez de en el modal. */
+        }
+
+        .topbar {
+            background: var(--topbar-bg);
+            padding: 0 28px;
+            height: 62px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.25s, border-color 0.25s;
+        }
+
+        .topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--acc), transparent);
+            opacity: 0.2;
+        }
+
+        .topbar-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--acc);
+            margin: 0;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--acc-glow);
+        }
+
+        [data-theme="light"] .topbar-title {
+            text-shadow: none;
+        }
+
+        .topbar-horario {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--acc-soft);
+            border: 1px solid var(--acc-border);
+            color: var(--acc);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 2px;
+            letter-spacing: 0.06em;
+            box-shadow: 0 0 10px var(--acc-soft);
+        }
+
+        .topbar-horario .dot-live {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--acc);
+            box-shadow: 0 0 6px var(--acc);
+            animation: pulse-nav 1.5s infinite;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .theme-toggle {
+            width: 38px; height: 22px;
+            background: var(--bg3);
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .theme-toggle .knob {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 14px; height: 14px;
+            border-radius: 1px;
+            background: var(--acc);
+            transition: left 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 6px var(--acc);
+        }
+
+        .theme-toggle .knob i { font-size: 9px; color: #fff; }
+        [data-theme="light"] .theme-toggle .knob { left: 20px; }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 5px 14px 5px 5px;
+            border-radius: 4px;
+        }
+
+        .user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 3px;
+            background: var(--acc-soft);
+            border: 1px solid var(--acc-border);
+            color: var(--acc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            text-shadow: 0 0 6px var(--acc-glow);
+        }
+
+        .user-chip .user-name {
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-weight: 700;
+            color: var(--tx0);
+            font-size: 14px;
+            letter-spacing: 0.02em;
+        }
+        .user-chip .user-role {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--acc);
+            font-size: 9px;
+            letter-spacing: 0.06em;
+        }
+
+        .logout-link {
+            font-size: 13px;
+            color: var(--tx2);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Rajdhani', system-ui, sans-serif;
+        }
+        .logout-link:hover { color: var(--danger-tx); }
+
+        /* =====================================================
+           ÁREA DE CONTENIDO
+        ===================================================== */
+        .content-area { padding: 28px 30px; flex: 1; }
+
+        /* =====================================================
+           CARDS — estilo panel de sistema
+        ===================================================== */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            transition: background 0.25s, border-color 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Esquinas decorativas estilo SL */
+        .card::before,
+        .card::after {
+            content: '';
+            position: absolute;
+            width: 12px; height: 12px;
+            border-color: var(--acc);
+            border-style: solid;
+            opacity: 0.4;
+        }
+        .card::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
+        .card::after  { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--acc-border);
+            box-shadow: var(--shadow), 0 0 16px var(--acc-soft);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--acc-border), transparent);
+        }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--tx0);
+        }
+
+        .stat-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--tx1);
+            margin-top: 4px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* =====================================================
+           TABLA
+        ===================================================== */
+        .table { margin: 0; }
+
+        .table th {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--tx2);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border) !important;
+            padding: 13px 18px;
+            background: var(--bg2);
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 13px 18px;
+            vertical-align: middle;
+            border-color: var(--border);
+            font-size: 14px;
+            color: var(--tx0);
+            background: transparent;
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-weight: 500;
+        }
+
+        .table tbody tr { transition: background 0.12s; }
+        .table tbody tr:hover {
+            background: var(--acc-soft);
+        }
+        .table > :not(caption) > * > * { background: transparent; }
+
+        .student-avatar {
+            width: 38px; height: 38px;
+            border-radius: 3px;
+            color: #060a12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .student-name {
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-weight: 700;
+            color: var(--tx0);
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+        .student-mac  {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--tx2);
+            background: var(--bg3);
+            padding: 2px 7px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+        }
+
+        /* =====================================================
+           BADGES — estilo status del sistema
+        ===================================================== */
+        .badge-presente {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--success-bg);
+            color: var(--success-tx);
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(0,230,118,0.2);
+            letter-spacing: 0.06em;
+            box-shadow: 0 0 8px rgba(0,230,118,0.1);
+        }
+
+        .badge-ausente {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--danger-bg);
+            color: var(--danger-tx);
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(255,82,82,0.2);
+            letter-spacing: 0.06em;
+        }
+
+        .badge-sin-datos {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--muted-bg);
+            color: var(--muted-tx);
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            letter-spacing: 0.06em;
+        }
+
+        .badge-notificado {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--warning-bg);
+            color: var(--warning-tx);
+            padding: 3px 10px;
+            border-radius: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            border: 1px solid rgba(255,214,0,0.2);
+            letter-spacing: 0.06em;
+        }
+
+        /* =====================================================
+           BOTONES — estilo SL
+        ===================================================== */
+        .btn-scan {
+            background: transparent;
+            color: var(--acc);
+            border: 1.5px solid var(--acc);
+            padding: 10px 22px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 12px rgba(79,195,247,0.15), inset 0 0 12px rgba(79,195,247,0.03);
+        }
+
+        .btn-scan::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 60%, rgba(79,195,247,0.08));
+        }
+
+        .btn-scan:hover {
+            background: var(--acc-soft);
+            color: var(--acc);
+            box-shadow: 0 0 20px rgba(79,195,247,0.35), inset 0 0 20px rgba(79,195,247,0.05);
+            transform: translateY(-1px);
+        }
+
+        .btn-scan:disabled, .btn-scan.scanning {
+            border-color: var(--warning-tx);
+            color: var(--warning-tx);
+            box-shadow: 0 0 10px rgba(255,214,0,0.15);
+            transform: none;
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        .btn-scan.pausado {
+            border-color: var(--border);
+            color: var(--tx2);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-export {
+            background: transparent;
+            color: var(--success-tx);
+            border: 1.5px solid rgba(0,230,118,0.3);
+            padding: 10px 22px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-export:hover {
+            background: var(--success-bg);
+            color: var(--success-tx);
+            box-shadow: 0 0 14px rgba(0,230,118,0.2);
+        }
+
+        .btn-pause {
+            background: transparent;
+            color: var(--warning-tx);
+            border: 1.5px solid rgba(255,214,0,0.3);
+            padding: 10px 22px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-pause:hover { background: var(--warning-bg); box-shadow: 0 0 14px rgba(255,214,0,0.15); }
+        .btn-pause.reanudar { color: var(--success-tx); border-color: rgba(0,230,118,0.3); }
+        .btn-pause.reanudar:hover { background: var(--success-bg); box-shadow: 0 0 14px rgba(0,230,118,0.15); }
+
+        /* Spinner */
+        .spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(79,195,247,0.2);
+            border-top-color: var(--acc);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* =====================================================
+           MODALES — estilo panel de sistema
+        ===================================================== */
+        .modal-content {
+            background: var(--bg1);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--tx0);
+            box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 30px rgba(79,195,247,0.05);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            position: relative;
+        }
+
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--acc-border), transparent);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--acc);
+            text-transform: uppercase;
+        }
+
+        .modal-footer { border-top: 1px solid var(--border); background: var(--bg2); }
+
+        .form-control, .form-select {
+            background: var(--bg0);
+            border: 1px solid var(--border);
+            color: var(--tx0);
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 14px;
+            border-radius: 3px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--bg0);
+            border-color: var(--acc);
+            color: var(--tx0);
+            box-shadow: 0 0 0 3px rgba(79,195,247,0.1), 0 0 10px rgba(79,195,247,0.1);
+        }
+
+        .form-control::placeholder { color: var(--tx2); }
+
+        .form-label {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--tx1);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .form-text { color: var(--tx2); font-size: 11px; }
+
+        .btn-close { filter: invert(1) opacity(0.5); }
+        [data-theme="light"] .btn-close { filter: none; }
+
+        /* =====================================================
+           FLASH MESSAGES
+        ===================================================== */
+        .flash-container { padding: 18px 30px 0; }
+
+        .alert {
+            border-radius: 3px;
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid;
+            letter-spacing: 0.02em;
+        }
+
+        .alert-success { background: var(--success-bg); color: var(--success-tx); border-color: rgba(0,230,118,0.2); }
+        .alert-danger  { background: var(--danger-bg);  color: var(--danger-tx);  border-color: rgba(255,82,82,0.2); }
+        .alert-warning { background: var(--warning-bg); color: var(--warning-tx); border-color: rgba(255,214,0,0.2); }
+        .alert-info    { background: var(--acc-soft);   color: var(--acc);        border-color: var(--acc-border); }
+
+        /* =====================================================
+           ESTADO VACÍO
+        ===================================================== */
+        .empty-state {
+            text-align: center;
+            padding: 56px 20px;
+            color: var(--tx2);
+        }
+        .empty-state i {
+            font-size: 2.4rem;
+            display: block;
+            margin-bottom: 14px;
+            opacity: 0.3;
+            color: var(--acc);
+        }
+        .empty-state p {
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.02em;
+        }
+
+        /* =====================================================
+           BOTONES DE BOOTSTRAP — override
+        ===================================================== */
+        .btn-primary {
+            background: var(--acc-soft) !important;
+            border: 1.5px solid var(--acc-border) !important;
+            color: var(--acc) !important;
+            font-family: 'Rajdhani', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 3px !important;
+            letter-spacing: 0.04em;
+        }
+        .btn-primary:hover {
+            background: rgba(79,195,247,0.15) !important;
+            box-shadow: 0 0 12px var(--acc-soft) !important;
+            color: var(--acc) !important;
+        }
+
+        .btn-secondary {
+            background: var(--bg3) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--tx1) !important;
+            font-family: 'Rajdhani', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 3px !important;
+        }
+
+        .btn-danger {
+            background: var(--danger-bg) !important;
+            border: 1.5px solid rgba(255,82,82,0.3) !important;
+            color: var(--danger-tx) !important;
+            font-family: 'Rajdhani', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 3px !important;
+        }
+        .btn-danger:hover {
+            background: rgba(255,82,82,0.15) !important;
+            color: var(--danger-tx) !important;
+        }
+
+        .btn-warning {
+            background: var(--warning-bg) !important;
+            border: 1.5px solid rgba(255,214,0,0.3) !important;
+            color: var(--warning-tx) !important;
+            font-family: 'Rajdhani', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 3px !important;
+        }
+
+        .btn-success {
+            background: var(--success-bg) !important;
+            border: 1.5px solid rgba(0,230,118,0.3) !important;
+            color: var(--success-tx) !important;
+            font-family: 'Rajdhani', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 3px !important;
+        }
+
+        .btn-sm { font-size: 12px !important; padding: 4px 10px !important; }
+
+        /* =====================================================
+           PAGE TITLE — override para que use Orbitron
+        ===================================================== */
+        h2, h3 {
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+        @media (max-width: 768px) {
+            .sidebar      { display: none; }
+            .main-content { margin-left: 0; }
+            .content-area { padding: 18px; }
+            .topbar       { padding: 0 18px; }
+            .topbar-horario { display: none; }
+        }
+
+        /* =====================================================
+           ANIMACIÓN DE ENTRADA
+        ===================================================== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-area > * {
+            animation: fadeInUp 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+            <img src="{{ url_for('static', filename='img/asistenciator_logo.png') }}"
+                 alt="Asistenciator">
+        </div>
+        <div class="sidebar-logo-text">
+            <p class="app-name">ASISTENCIATOR</p>
+            <p class="app-sub">IoT SYSTEM · RPi 4</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section">Sistema</div>
+
+        <a href="{{ url_for('index') }}"
+           class="{{ 'active' if request.endpoint == 'index' else '' }}">
+            <i class="bi bi-grid-1x2-fill"></i>
+            Asistencia Hoy
+            {% if horario_activo %}
+                <span class="nav-badge-live">&#9654; LIVE</span>
+            {% endif %}
+        </a>
+
+        <a href="{{ url_for('gestion_alumnos') }}"
+           class="{{ 'active' if request.endpoint == 'gestion_alumnos' else '' }}">
+            <i class="bi bi-people-fill"></i>
+            Alumnos/as
+        </a>
+
+        <a href="{{ url_for('gestion_horarios') }}"
+           class="{{ 'active' if request.endpoint == 'gestion_horarios' else '' }}">
+            <i class="bi bi-clock-fill"></i>
+            Horarios
+        </a>
+
+        <a href="{{ url_for('gestion_asignaturas') }}"
+           class="{{ 'active' if request.endpoint in ('gestion_asignaturas','add_asignatura','edit_asignatura') else '' }}">
+            <i class="bi bi-hexagon-fill"></i>
+            Asignaturas
+        </a>
+
+        <div class="sidebar-section" style="margin-top:6px;">Archivos</div>
+
+        {#
+            Mostramos TODAS las pestañas a TODOS los usuarios autenticados.
+            El control de acceso real sigue siendo en el backend con
+            @rol_requerido(...) que aborta con 403 si el rol no tiene
+            permiso. Así un profesor puede ver que existen "Informes",
+            "Asistencia Total", "Usuarios" o "Configuración" pero al pulsar
+            le aparecerá la página personalizada "YOU SHALL NOT PASS".
+            Visualmente atenuamos las opciones que el rol actual no puede
+            usar añadiendo .nav-locked.
+        #}
+        <a href="{{ url_for('ver_informes') }}"
+           class="{{ 'active' if request.endpoint in ('ver_informes','ver_informe','descargar_informe') else '' }}{{ '' if current_user.es_tutor else ' nav-locked' }}"
+           {% if not current_user.es_tutor %}title="Acceso restringido a tutores y administradores"{% endif %}>
+            <i class="bi bi-bar-chart-fill"></i>
+            Informes
+            {% if not current_user.es_tutor %}<i class="bi bi-lock-fill nav-lock-icon"></i>{% endif %}
+        </a>
+        <a href="{{ url_for('asistencia_total') }}"
+           class="{{ 'active' if request.endpoint == 'asistencia_total' else '' }}{{ '' if current_user.es_tutor else ' nav-locked' }}"
+           {% if not current_user.es_tutor %}title="Acceso restringido a tutores y administradores"{% endif %}>
+            <i class="bi bi-table"></i>
+            Asistencia Total
+            {% if not current_user.es_tutor %}<i class="bi bi-lock-fill nav-lock-icon"></i>{% endif %}
+        </a>
+
+        <div class="sidebar-section" style="margin-top:6px;">Administración</div>
+        <a href="{{ url_for('gestion_usuarios') }}"
+           class="{{ 'active' if request.endpoint == 'gestion_usuarios' else '' }}{{ '' if current_user.es_admin else ' nav-locked' }}"
+           {% if not current_user.es_admin %}title="Acceso restringido a administradores"{% endif %}>
+            <i class="bi bi-shield-fill-check"></i>
+            Usuarios
+            {% if not current_user.es_admin %}<i class="bi bi-lock-fill nav-lock-icon"></i>{% endif %}
+        </a>
+        <a href="{{ url_for('configuracion') }}"
+           class="{{ 'active' if request.endpoint in ('configuracion','guardar_configuracion') else '' }}{{ '' if current_user.es_tutor else ' nav-locked' }}"
+           {% if not current_user.es_tutor %}title="Acceso restringido a tutores y administradores"{% endif %}>
+            <i class="bi bi-sliders2"></i>
+            Configuración
+            {% if not current_user.es_tutor %}<i class="bi bi-lock-fill nav-lock-icon"></i>{% endif %}
+        </a>
+
+        <a href="{{ url_for('logout') }}" style="margin-top:auto;">
+            <i class="bi bi-power"></i>
+            Desconectar
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="status-dot {{ 'pausado' if escaneo_pausado else '' }}"></div>
+        {% if escaneo_pausado %}Escaneo pausado{% else %}Sistema activo{% endif %}
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="topbar">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="topbar-title">{% block page_title %}PANEL{% endblock %}</h1>
+            {% if horario_activo %}
+            <div class="topbar-horario">
+                <div class="dot-live"></div>
+                {{ horario_activo.asignatura }} — AULA {{ horario_activo.aula }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="topbar-right">
+            <div class="theme-toggle" onclick="toggleTheme()" title="Cambiar modo">
+                <div class="knob"><i class="bi bi-moon-stars-fill" id="theme-icon"></i></div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-link" title="Cerrar sesión">
+                <i class="bi bi-power"></i>
+                <span class="d-none d-md-inline">Salir</span>
+            </a>
+            <div class="user-chip">
+                <div class="user-avatar">{{ current_user.iniciales }}</div>
+                <div>
+                    <div class="user-name">{{ current_user.nombre }}</div>
+                    <div class="user-role">{{ current_user.label_rol }}</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="content-area">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+    const saved = localStorage.getItem('asistenciator-theme') || 'dark';
+    applyTheme(saved);
+})();
+(function () {
+    // Inyección de token CSRF en formularios POST.
+    //
+    // Antes había un MutationObserver global con subtree:true que escuchaba
+    // cualquier cambio en <body>. Eso interfería con la animación de los
+    // modales de Bootstrap (cuando éste inserta el .modal-backdrop, el
+    // observer disparaba y a veces dejaba a Bootstrap a medio camino, con
+    // backdrop colgado y la clase 'show' sin aplicar). Como esta app no
+    // crea formularios dinámicamente, basta con inyectar en carga + en submit.
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (!token) return;
+    function inyectarCSRF(form) {
+        if (form.method.toLowerCase() !== 'post') return;
+        if (form.querySelector('input[name="csrf_token"]')) return;
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'csrf_token';
+        inp.value = token;
+        form.appendChild(inp);
+    }
+    // Pasada inicial: todos los forms ya renderizados.
+    document.querySelectorAll('form').forEach(inyectarCSRF);
+    // Red de seguridad: inyectar también justo antes de enviar, por si
+    // algún form se añadiera al DOM en el futuro.
+    document.addEventListener('submit', e => {
+        if (e.target instanceof HTMLFormElement) inyectarCSRF(e.target);
+    }, true);
+})();
+
+// Limpieza defensiva: si la página se ha quedado en un estado raro (backdrop
+// colgado o body con modal-open) de una sesión anterior antes de que se
+// arreglara este bug, lo limpiamos al cargar para no bloquear la UI.
+(function () {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    });
+    // Tras cerrar un modal, asegurar que no queden restos. Bootstrap ya
+    // limpia, pero esto cubre cualquier caso de animación interrumpida.
+    document.addEventListener('hidden.bs.modal', () => {
+        // Si no hay ningún modal visible, retirar backdrops huérfanos.
+        const algunoVisible = document.querySelector('.modal.show');
+        if (!algunoVisible) {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
+    });
+})();
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = theme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+    localStorage.setItem('asistenciator-theme', theme);
+}
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+// Los formularios dentro de modales no necesitan cerrar el modal manualmente:
+// la navegación que produce el submit recarga la página de todas formas.
+// El listener anterior causaba que Bootstrap intentara animar el cierre del
+// modal al mismo tiempo que el navegador navegaba, dejando el backdrop colgado.
+</script>
+{% block scripts %}{% endblock %}
+{% if current_user.is_authenticated %}
+<script>
+// =============================================================================
+// AVISO DE SESIÓN A PUNTO DE EXPIRAR
+// =============================================================================
+// El servidor cierra la sesión tras 2 h de inactividad real (clicks, formularios,
+// navegación). El polling automático /api/dashboard-estado ya no cuenta como
+// actividad — si no, la sesión nunca expiraría.
+//
+// Aquí, en cliente, mostramos un aviso a los 1h 50min de carga (o última
+// interacción real) con un contador a 10 minutos. Si el usuario pulsa
+// "CONTINUAR" se hace una petición real al servidor que renueva la actividad.
+// Si no, se hace logout automático al cumplir las 2 h.
+//
+// Sólo escuchamos eventos de interacción REAL (click + keydown). Antes
+// escuchábamos también 'mousemove' y 'scroll', pero eso reseteaba el timer
+// con cualquier movimiento accidental del ratón sobre la pestaña, así que el
+// aviso nunca llegaba a aparecer.
+(function () {
+    const TIMEOUT_MS  = 2 * 60 * 60 * 1000;   // 2 h
+    const AVISO_MS    = 10 * 60 * 1000;       // últimos 10 min antes del cierre
+    const AVISO_EN_MS = TIMEOUT_MS - AVISO_MS;
+    let timerAviso = null;
+
+    function mostrarAviso() {
+        if (document.getElementById('session-warning')) return;
+        const div = document.createElement('div');
+        div.id = 'session-warning';
+        div.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg1);border:1px solid var(--warning-tx);border-radius:4px;padding:16px 20px;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 20px rgba(255,214,0,.1);font-family:Rajdhani,system-ui,sans-serif;';
+        div.innerHTML = `<div style="display:flex;align-items:flex-start;gap:12px;"><i class="bi bi-clock-history" style="font-size:1.3rem;color:var(--warning-tx);flex-shrink:0;margin-top:2px;filter:drop-shadow(0 0 4px var(--warning-tx));"></i><div><div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--warning-tx);margin-bottom:6px;letter-spacing:.08em;">&#9888; SESSION EXPIRING</div><div style="font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:12px;">Sesión expira en <strong style="color:var(--tx0);font-family:'Share Tech Mono',monospace;" id="sess-countdown">10:00</strong></div><div style="display:flex;gap:8px;"><button onclick="renovarSesion()" style="background:var(--acc-soft);color:var(--acc);border:1px solid var(--acc-border);padding:7px 14px;border-radius:3px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.05em;font-family:'Orbitron',monospace;">CONTINUAR</button><a href="/logout" style="background:transparent;border:1px solid var(--border);color:var(--tx2);padding:7px 14px;border-radius:3px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;font-family:Rajdhani,monospace;">Cerrar sesión</a></div></div></div>`;
+        document.body.appendChild(div);
+        let seg = AVISO_MS / 1000;
+        const iv = setInterval(() => {
+            seg--;
+            const m = Math.floor(seg / 60).toString().padStart(2, '0');
+            const s = (seg % 60).toString().padStart(2, '0');
+            const el = document.getElementById('sess-countdown');
+            if (el) el.textContent = m + ':' + s;
+            if (seg <= 0) { clearInterval(iv); window.location.href = '/logout'; }
+        }, 1000);
+        div._countdownInterval = iv;
+    }
+
+    function renovarSesion() {
+        // Llamamos a un endpoint que SÍ cuenta como actividad en el servidor.
+        // /api/dashboard-estado ya no la renueva, por eso usamos /.
+        fetch('/', { method: 'GET', credentials: 'same-origin' })
+            .then(() => {
+                const a = document.getElementById('session-warning');
+                if (a) { clearInterval(a._countdownInterval); a.remove(); }
+                resetTimer();
+            })
+            .catch(() => window.location.reload());
+    }
+
+    function resetTimer() {
+        clearTimeout(timerAviso);
+        timerAviso = setTimeout(mostrarAviso, AVISO_EN_MS);
+    }
+
+    // Sólo eventos de interacción real — sin mousemove ni scroll, que se
+    // disparan accidentalmente y mantienen el timer vivo para siempre.
+    ['click', 'keydown'].forEach(ev =>
+        document.addEventListener(ev, resetTimer, { passive: true })
+    );
+    resetTimer();
+})();
+</script>
+{% endif %}
+</body>
+</html>
