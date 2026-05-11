@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Crontab del scheduler v2.5
+# ASISTENCIATOR IoT — Crontab del scheduler v1.0
 # =============================================================================
 #
 # Lunes–viernes: heartbeat de escaneo cada minuto (07:00–22:59).

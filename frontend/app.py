@@ -120,6 +120,25 @@ def _configurar_logging():
 
 log = _configurar_logging()
 
+# Log de arranque con la configuración crítica de cookies. Si
+# secure_cookie=True y accedes por HTTP, el navegador NO mandará la
+# cookie de sesión de vuelta — síntoma: login no entra, vuelve a /login
+# o 403 con current_user vacío. Solución: SESSION_COOKIE_SECURE=false
+# en .env (recomendado en este proyecto, porque Cloudflare ya fuerza
+# HTTPS por arriba).
+log.info(
+    f"BOOT_CONFIG SESSION_COOKIE_SECURE={_secure_cookie} "
+    f"(env var SESSION_COOKIE_SECURE="
+    f"{os.environ.get('SESSION_COOKIE_SECURE', '<no definida>')!r})"
+)
+if _secure_cookie:
+    log.warning(
+        "BOOT_CONFIG SESSION_COOKIE_SECURE está activo. El login NO "
+        "funcionará por HTTP plano (p. ej. http://192.168.x.x:5000). "
+        "Pon SESSION_COOKIE_SECURE=false en .env si necesitas acceso "
+        "local sin Cloudflare."
+    )
+
 # =============================================================================
 # RATE LIMITER (Flask-Limiter)
 # =============================================================================
@@ -152,6 +171,15 @@ def _verificar_csrf():
     Exime:
       - Peticiones JSON (Content-Type: application/json)
       - Llamadas del scheduler autenticadas con X-Scheduler-Key
+
+    Devuelve:
+      - None si todo OK (el request continúa al endpoint normal).
+      - Un Response (redirect) si el token falla en /login o /setup —
+        recuperación elegante para que el usuario no quede atrapado en
+        un 403 si la cookie de sesión se ha perdido (navegador que la
+        bloquea, SESSION_COOKIE_SECURE=true sobre HTTP, primera visita
+        sin sesión previa, etc.). En el resto de endpoints se aborta
+        con 403 como siempre.
     """
     if request.method != 'POST':
         return None
@@ -164,8 +192,32 @@ def _verificar_csrf():
     token_form    = request.form.get('csrf_token', '')
     token_sesion  = session.get('csrf_token', '')
     if not token_form or not secrets.compare_digest(token_form, token_sesion):
-        log.warning(f"CSRF inválido desde {request.remote_addr} → {request.path}")
+        # Log detallado para diagnóstico: a menudo el síntoma es "no puedo
+        # entrar y caigo en 403". Suele ser cookie de sesión perdida.
+        log.warning(
+            f"CSRF inválido desde {request.remote_addr} → {request.path} "
+            f"endpoint={request.endpoint} "
+            f"form_token={'sí' if token_form else 'NO'} "
+            f"session_token={'sí' if token_sesion else 'NO'} "
+            f"secure_cookie={_secure_cookie} scheme={request.scheme}"
+        )
+        # Recuperación elegante en pantallas de autenticación: regeneramos
+        # la sesión y mandamos a la misma página con un aviso. Sin esto, el
+        # usuario que pierde la cookie (típico en HTTP local con
+        # SESSION_COOKIE_SECURE=true) ve un 403 y un bucle hacia /login.
+        # El bruteforce sigue protegido por el rate limiter (5/10 min).
+        if request.endpoint in ('login', 'setup'):
+            session.clear()
+            flash(
+                'Tu sesión ha caducado o las cookies están bloqueadas. '
+                'Vuelve a intentarlo. Si el problema persiste, revisa que '
+                'tu navegador acepte cookies y que SESSION_COOKIE_SECURE='
+                'false en el .env para acceso HTTP local.',
+                'warning'
+            )
+            return redirect(url_for(request.endpoint))
         abort(403)
+    return None
 
 
 # Endpoints que NO cuentan como actividad del usuario para el timeout
@@ -214,7 +266,12 @@ def antes_de_peticion():
 
     # ── CSRF ─────────────────────────────────────────────────────────────────
     g.csrf_token = _generar_csrf()
-    _verificar_csrf()
+    csrf_response = _verificar_csrf()
+    if csrf_response is not None:
+        # _verificar_csrf devuelve un redirect cuando el fallo ocurre en
+        # /login o /setup (recuperación elegante). En el resto de endpoints
+        # ya habrá llamado a abort(403) y nunca llegamos aquí.
+        return csrf_response
 
 
 @app.context_processor

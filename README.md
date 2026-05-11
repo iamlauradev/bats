@@ -213,7 +213,7 @@ Consulta `.env.example` para la lista completa con comentarios.
 
 | Tarea | Horario | Descripción |
 |---|---|---|
-| Escaneo Bluetooth | Cada 10 min, L–V 7:00–22:00 | Detecta presencia y registra asistencia |
+| Escaneo Bluetooth | Cada minuto, L–V 7:00–22:59 (la app descarta según franja y frecuencia configurada) | Detecta presencia y registra asistencia |
 | Resumen de turno | Al final de cada turno | Mensaje Telegram con lista de ausentes |
 | Informe semanal | Viernes 23:59 | Genera informe HTML, purga registros individuales |
 

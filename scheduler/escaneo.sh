@@ -2,7 +2,7 @@
 # =============================================================================
 # ASISTENCIATOR IoT — Script de escaneo automático v1.0
 # =============================================================================
-# Ejecutado por crond cada 10 minutos (lunes a viernes, 07:50 a 22:00).
+# Ejecutado por crond cada minuto (lunes a viernes, 07:00 a 22:59).
 #
 # Lógica de dos fases:
 #   Fase 1 — Consulta /estado-franja: ¿hay clase ahora mismo?

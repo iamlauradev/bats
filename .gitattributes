@@ -1,0 +1,46 @@
+# =============================================================================
+# ASISTENCIATOR IoT — Reglas de Git para line endings
+# =============================================================================
+# Sin estas reglas, al clonar el repo en Windows Git convierte los archivos
+# de texto a CRLF (\r\n). El crond de Alpine y /bin/sh no toleran CRLF:
+#   - El crontab con CRLF se ignora silenciosamente.
+#   - Los scripts .sh con shebang "#!/bin/sh\r" no pueden ejecutarse.
+# Resultado: el scheduler arranca pero ninguna tarea llega a correr.
+#
+# Estas reglas fuerzan LF en todos los archivos que viven dentro del
+# contenedor Linux, independientemente del SO del que clones el repo.
+# =============================================================================
+
+# Scripts shell — siempre LF
+*.sh             text eol=lf
+
+# Crontab — siempre LF
+scheduler/crontab text eol=lf
+
+# Dockerfiles y entrypoints — siempre LF
+Dockerfile       text eol=lf
+*.dockerfile     text eol=lf
+
+# Archivos Python — LF (la app corre en contenedor Linux)
+*.py             text eol=lf
+
+# YAML/JSON de configuración — LF
+*.yml            text eol=lf
+*.yaml           text eol=lf
+*.json           text eol=lf
+
+# SQL — LF
+*.sql            text eol=lf
+
+# Plantillas Jinja2 y assets web — LF
+*.html           text eol=lf
+*.css            text eol=lf
+*.js             text eol=lf
+
+# Binarios — sin conversión
+*.png            binary
+*.jpg            binary
+*.jpeg           binary
+*.gif            binary
+*.ico            binary
+*.pdf            binary
