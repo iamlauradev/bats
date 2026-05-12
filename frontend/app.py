@@ -1102,8 +1102,18 @@ def escanear():
         for id_alumno, nombre_completo, esta_presente in resultados:
             nuevo_estado = 'PRESENTE' if esta_presente else 'AUSENTE'
 
+            # Una sola fila por (alumno, horario, fecha).
+            # Si ya existe: solo cambia a PRESENTE si es que el alumno
+            # llega tarde; nunca degrada de PRESENTE a AUSENTE.
             cursor.execute(
-                "INSERT INTO asistencia (id_alumno, id_horario, fecha, hora_registro, estado) VALUES (%s, %s, %s, %s, %s)",
+                """
+                INSERT INTO asistencia (id_alumno, id_horario, fecha, hora_registro, estado)
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    estado        = IF(VALUES(estado) = 'PRESENTE', 'PRESENTE', estado),
+                    hora_registro = IF(VALUES(estado) = 'PRESENTE' AND estado = 'AUSENTE',
+                                       VALUES(hora_registro), hora_registro)
+                """,
                 (id_alumno, id_horario, fecha_hoy, hora_registro, nuevo_estado)
             )
 

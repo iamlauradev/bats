@@ -128,7 +128,8 @@ CREATE TABLE IF NOT EXISTS asistencia (
         ON DELETE CASCADE,
     CONSTRAINT fk_asist_horario
         FOREIGN KEY (id_horario) REFERENCES horarios(id_horario)
-        ON DELETE SET NULL
+        ON DELETE SET NULL,
+    UNIQUE KEY uk_asist_unica (id_alumno, id_horario, fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX IF NOT EXISTS idx_asist_fecha
