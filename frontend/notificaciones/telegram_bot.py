@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT -- Modulo de notificaciones Telegram v1.0
+# BATS IoT -- Modulo de notificaciones Telegram v1.0
 # =============================================================================
 # Envia alertas al chat de Telegram configurado.
 # Usa la API HTTP de Telegram directamente (sin librerias extra).

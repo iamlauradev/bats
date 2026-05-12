@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Docker Compose v1.0
+# BATS IoT — Docker Compose v1.0
 # =============================================================================
 #
 # Servicios:
@@ -25,7 +25,7 @@ services:
   # ---------------------------------------------------------------------------
   db:
     image: mariadb:10.11
-    container_name: asistenciator_db
+    container_name: bats_db
     restart: unless-stopped
     ports:
       - "127.0.0.1:3306:3306"    # Solo accesible desde localhost
@@ -54,7 +54,7 @@ services:
   # ---------------------------------------------------------------------------
   web:
     build: ./frontend
-    container_name: asistenciator_web
+    container_name: bats_web
     restart: unless-stopped
     env_file: .env
     environment:
@@ -82,14 +82,14 @@ services:
       - ./frontend:/app
       - ./poc:/poc
       - /var/run/dbus:/var/run/dbus
-      - ./logs:/var/log/asistenciator
+      - ./logs:/var/log/bats
 
   # ---------------------------------------------------------------------------
   # SCHEDULER
   # ---------------------------------------------------------------------------
   scheduler:
     build: ./scheduler
-    container_name: asistenciator_scheduler
+    container_name: bats_scheduler
     restart: unless-stopped
     network_mode: "host"
     environment:
@@ -98,7 +98,7 @@ services:
     depends_on:
       - web
     volumes:
-      - ./logs:/var/log/asistenciator
+      - ./logs:/var/log/bats
 
   # ---------------------------------------------------------------------------
   # CLOUDFLARE TUNNEL
@@ -108,7 +108,7 @@ services:
   # ---------------------------------------------------------------------------
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: asistenciator_cloudflared
+    container_name: bats_cloudflared
     restart: unless-stopped
     network_mode: "host"    # Necesario para alcanzar localhost:5000 de Flask
     command: tunnel --no-autoupdate run

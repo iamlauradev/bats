@@ -1,1 +1,1 @@
-# Módulo de notificaciones de Asistenciator
+# Módulo de notificaciones de BATS

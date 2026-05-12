@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ASISTENCIATOR IoT — Script de backup de base de datos
+# BATS IoT — Script de backup de base de datos
 # =============================================================================
 # Autora  : Laura Linares — iamlaura.dev
 # Versión : 1.0
@@ -14,7 +14,7 @@
 #
 # Programación automática (cron del host):
 #   Añadir con: sudo crontab -e
-#   0 3 * * * /ruta/completa/al/proyecto/scripts/backup.sh >> /var/log/asistenciator/backup.log 2>&1
+#   0 3 * * * /ruta/completa/al/proyecto/scripts/backup.sh >> /var/log/bats/backup.log 2>&1
 #
 # Retención: conserva los últimos 30 días, borra los más antiguos.
 # =============================================================================
@@ -24,9 +24,9 @@ set -euo pipefail
 # ── Configuración ─────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROYECTO_DIR="$(dirname "$SCRIPT_DIR")"
-BACKUP_DIR="/backups/asistenciator"
+BACKUP_DIR="/backups/bats"
 RETENCION_DIAS=30
-CONTENEDOR_DB="asistenciator_db"
+CONTENEDOR_DB="bats_db"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 FECHA_LEGIBLE=$(date '+%Y-%m-%d %H:%M:%S')
 FICHERO_BACKUP="backup_${TIMESTAMP}.sql.gz"

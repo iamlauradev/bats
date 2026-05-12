@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT -- Modulo de Deteccion Bluetooth (intercambiable)
+# BATS IoT -- Modulo de Deteccion Bluetooth (intercambiable)
 # =============================================================================
 
 import subprocess

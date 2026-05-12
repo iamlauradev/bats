@@ -1,4 +1,4 @@
-# 📡 Asistenciator — Control de Asistencia por Bluetooth
+# 📡 BATS — Control de Asistencia por Bluetooth
 
 ![Raspberry Pi](https://img.shields.io/badge/-Raspberry_Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi)
 ![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
@@ -84,7 +84,7 @@ graph TD
 ## 📂 Estructura del proyecto
 
 ```
-asistenciator-bluetooth-attendance/
+bats/
 ├── docker-compose.yml          # Orquestación de los 4 servicios
 ├── .env.example                # Plantilla de variables de entorno
 ├── logrotate.conf              # Rotación de logs del sistema
@@ -160,8 +160,8 @@ Tablas principales:
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/asistenciator-bluetooth-attendance.git
-cd asistenciator-bluetooth-attendance
+git clone https://github.com/tu-usuario/bats.git
+cd bats
 
 # 2. Crear el fichero de entorno
 cp .env.example .env
@@ -184,7 +184,7 @@ En el primer arranque, si no hay ningún usuario en la base de datos, el sistema
 | Variable | Descripción | Ejemplo |
 |---|---|---|
 | `MYSQL_ROOT_PASSWORD` | Contraseña root de MariaDB | `s3cr3t_root` |
-| `MYSQL_USER` / `MYSQL_PASSWORD` | Usuario de la aplicación | `asistenciator_app` |
+| `MYSQL_USER` / `MYSQL_PASSWORD` | Usuario de la aplicación | `bats_app` |
 | `FLASK_SECRET_KEY` | Clave secreta Flask (mínimo 32 chars) | `python3 -c "import secrets; print(secrets.token_urlsafe(32))"` |
 | `SCHEDULER_KEY` | Clave para autenticar al scheduler | igual que arriba |
 | `SESSION_COOKIE_SECURE` | `false` (defecto). Cloudflare ya fuerza HTTPS en el navegador. Poner `true` solo si Flask sirve HTTPS directamente sin Cloudflare | `false` |

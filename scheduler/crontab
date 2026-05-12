@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Crontab del scheduler v1.0
+# BATS IoT — Crontab del scheduler v1.0
 # =============================================================================
 #
 # Lunes–viernes: heartbeat de escaneo cada minuto (07:00–22:59).
@@ -17,9 +17,9 @@
 # =============================================================================
 
 # Escaneo — lunes a viernes, 07:00–22:59, cada minuto
-* 7-22 * * 1-5 /scheduler/escaneo.sh >> /var/log/asistenciator/cron.log 2>&1
+* 7-22 * * 1-5 /scheduler/escaneo.sh >> /var/log/bats/cron.log 2>&1
 
 # Informe + purga semanal — viernes a las 23:59
-59 23 * * 5 /scheduler/informe.sh >> /var/log/asistenciator/informe.log 2>&1
+59 23 * * 5 /scheduler/informe.sh >> /var/log/bats/informe.log 2>&1
 
 # Línea en blanco (requerida por crond)

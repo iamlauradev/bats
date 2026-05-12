@@ -1,7 +1,7 @@
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#003366', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
 flowchart TB
     %% =========================================================================
-    %% ASISTENCIATOR IoT v2.4 — Arquitectura final (orientación VERTICAL)
+    %% BATS IoT v1.0 — Arquitectura final (orientación VERTICAL)
     %% Pensado para encajar en una hoja vertical de Google Docs.
     %% =========================================================================
 
@@ -23,7 +23,7 @@ flowchart TB
         Cloudflared(["cloudflared<br/>Tunnel saliente"]):::container
         Web(["web · Flask Python<br/>Escáner Bluetooth :5000"]):::container
         Sched(["scheduler · Alpine + crond<br/>Gating cada N min"]):::container
-        DB[(asistenciator_db<br/>MariaDB 10.11 :3306)]:::database
+        DB[(bats_db<br/>MariaDB 10.11 :3306)]:::database
         BT(["Antena Bluetooth USB"]):::hardware
 
         Cloudflared --> Web

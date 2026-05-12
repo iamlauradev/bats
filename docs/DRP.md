@@ -1,5 +1,5 @@
 # Plan de Recuperación ante Desastres (DRP)
-## ASISTENCIATOR IoT — Control de Asistencia Bluetooth
+## BATS IoT — Control de Asistencia Bluetooth
 **Autora:** Laura Linares — iamlaura.dev  
 **Versión:** 1.0
 
@@ -7,7 +7,7 @@
 
 ## 1. Introducción
 
-Este documento describe el procedimiento completo para restaurar el sistema ASISTENCIATOR IoT tras un fallo total de la Raspberry Pi. El objetivo es minimizar el tiempo de inactividad y garantizar que los datos de asistencia no se pierdan.
+Este documento describe el procedimiento completo para restaurar el sistema BATS IoT tras un fallo total de la Raspberry Pi. El objetivo es minimizar el tiempo de inactividad y garantizar que los datos de asistencia no se pierdan.
 
 ### Objetivos de recuperación
 
@@ -26,14 +26,14 @@ El RTO de 2 horas asume que se dispone de otra Raspberry Pi 4 con Raspberry Pi O
 Raspberry Pi 4 (2 GB RAM, tarjeta SD 32 GB)
 ├── Raspberry Pi OS Lite (64-bit)
 ├── Docker Engine + Docker Compose
-├── Repositorio Git: iot-bluetooth-attendance/
+├── Repositorio Git: Bluetooth-Based Attendance Tracking System/
 │   ├── docker-compose.yml
 │   ├── .env                    ← SECRETO, NO está en Git
 │   └── scripts/
 │       ├── backup.sh
 │       └── restaurar.sh
-├── /backups/asistenciator/     ← Dumps diarios de la BD
-└── /var/log/asistenciator/     ← Logs de la aplicación
+├── /backups/bats/     ← Dumps diarios de la BD
+└── /var/log/bats/     ← Logs de la aplicación
 ```
 
 > **Nota crítica:** El fichero `.env` contiene todas las contraseñas y tokens del sistema. **No está en Git** por seguridad. Debe guardarse en un lugar seguro externo a la RPi (gestor de contraseñas del centro, copia cifrada en la nube, etc.). Sin el `.env`, la restauración no es posible.
@@ -98,7 +98,7 @@ Este es el escenario principal de este DRP. Seguir el procedimiento completo de 
 **1.1** Descargar Raspberry Pi OS Lite (64-bit) desde [raspberrypi.com/software](https://www.raspberrypi.com/software/).
 
 **1.2** Grabar la imagen en la nueva tarjeta SD con Raspberry Pi Imager. En la configuración avanzada del Imager:
-- Establecer nombre de host: `asistenciator`
+- Establecer nombre de host: `bats`
 - Habilitar SSH con clave pública o contraseña
 - Configurar Wi-Fi si es necesario
 
@@ -123,14 +123,14 @@ sudo usermod -aG docker $USER
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/iot-bluetooth-attendance.git
-cd iot-bluetooth-attendance
+git clone https://github.com/tu-usuario/bats.git
+cd bats
 ```
 
 Si el repositorio es privado:
 ```bash
 # Configurar credenciales Git o usar token de acceso personal
-git clone https://token@github.com/tu-usuario/iot-bluetooth-attendance.git
+git clone https://token@github.com/tu-usuario/bats.git
 ```
 
 ---
@@ -141,7 +141,7 @@ Recuperar el fichero `.env` desde el lugar seguro donde se guardó la copia (ges
 
 ```bash
 # Opción A: copiar desde otro dispositivo por SCP
-scp usuario@otro-equipo:/ruta/.env ~/iot-bluetooth-attendance/.env
+scp usuario@otro-equipo:/ruta/.env ~/bats/.env
 
 # Opción B: crearlo manualmente desde .env.example
 cp .env.example .env
@@ -157,15 +157,15 @@ grep -E "^(MYSQL_|FLASK_|SCHEDULER_|CLOUDFLARE_)" .env
 
 ### Paso 4 — Recuperar los backups `⏱ ~5-10 min`
 
-Los backups en `/backups/asistenciator/` no están en Git y se pierden con la tarjeta SD. Deben haberse copiado previamente a un almacenamiento externo.
+Los backups en `/backups/bats/` no están en Git y se pierden con la tarjeta SD. Deben haberse copiado previamente a un almacenamiento externo.
 
 **Si se tenía sincronización externa** (ver sección 5):
 ```bash
 # Recuperar desde almacenamiento externo
-sudo mkdir -p /backups/asistenciator
+sudo mkdir -p /backups/bats
 # Copiar el backup más reciente
-sudo scp usuario@servidor-externo:/backups/asistenciator/backup_*.sql.gz \
-     /backups/asistenciator/
+sudo scp usuario@servidor-externo:/backups/bats/backup_*.sql.gz \
+     /backups/bats/
 ```
 
 **Si no hay backup externo:**  
@@ -192,7 +192,7 @@ docker compose ps
 
 # Verificar que Flask responde
 curl -s http://localhost:5000 | grep -o "<title>.*</title>"
-# Debe devolver: <title>Iniciar Sesión — Asistenciator</title>
+# Debe devolver: <title>Iniciar Sesión — BATS</title>
 ```
 
 ---
@@ -206,10 +206,10 @@ Si se recuperó un backup en el paso 4:
 chmod +x scripts/backup.sh scripts/restaurar.sh
 
 # Listar backups disponibles
-ls -lh /backups/asistenciator/
+ls -lh /backups/bats/
 
 # Restaurar el más reciente (ajustar el nombre del fichero)
-./scripts/restaurar.sh /backups/asistenciator/backup_YYYYMMDD_HHMMSS.sql.gz
+./scripts/restaurar.sh /backups/bats/backup_YYYYMMDD_HHMMSS.sql.gz
 ```
 
 El script pedirá confirmación, hará un backup de seguridad previo y restaurará los datos.
@@ -229,7 +229,7 @@ sudo crontab -l   # Verificar que aparece la línea del backup
 
 ```bash
 # 1. Acceder a la web (con Cloudflare Tunnel activo)
-#    https://asistenciator.tudominio.com
+#    https://bats.tudominio.com
 
 # 2. Iniciar sesión con las credenciales del administrador
 
@@ -239,7 +239,7 @@ sudo crontab -l   # Verificar que aparece la línea del backup
 # 4. Lanzar un escaneo manual para verificar que el Bluetooth funciona
 
 # 5. Verificar los logs
-tail -f /var/log/asistenciator/app.log
+tail -f /var/log/bats/app.log
 ```
 
 ---
@@ -254,10 +254,10 @@ Añadir al crontab del host una tarea que copie los backups a un servidor extern
 
 ```bash
 # Ejemplo con rsync a un servidor SSH externo (añadir al crontab tras la línea del backup)
-30 3 * * * rsync -az /backups/asistenciator/ usuario@servidor-externo:/backups/asistenciator/
+30 3 * * * rsync -az /backups/bats/ usuario@servidor-externo:/backups/bats/
 
 # Ejemplo con rclone a Google Drive / Nextcloud (requiere configurar rclone previamente)
-30 3 * * * rclone sync /backups/asistenciator/ drive:asistenciator-backups/ --log-file=/var/log/asistenciator/rclone.log
+30 3 * * * rclone sync /backups/bats/ drive:bats-backups/ --log-file=/var/log/bats/rclone.log
 ```
 
 ### 5.2 Backup de la tarjeta SD completa
@@ -266,7 +266,7 @@ Para un RTO aún menor, clonar la tarjeta SD mensualmente con otra RPi o con un 
 
 ```bash
 # Desde un PC con la tarjeta SD insertada (reemplazar /dev/sdX por el dispositivo correcto)
-sudo dd if=/dev/sdX bs=4M status=progress | gzip > asistenciator_sd_$(date +%Y%m%d).img.gz
+sudo dd if=/dev/sdX bs=4M status=progress | gzip > bats_sd_$(date +%Y%m%d).img.gz
 ```
 
 ---

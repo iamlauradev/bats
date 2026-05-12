@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — .gitignore
+# BATS IoT — .gitignore
 # =============================================================================
 
 # ─── SECRETOS Y CONFIGURACIÓN LOCAL ──────────────────────────────────────
@@ -15,7 +15,7 @@
 
 # ─── BACKUPS DE BASE DE DATOS ────────────────────────────────────────────
 # Los dumps contienen datos personales de alumnos (RGPD).
-# Se almacenan en /backups/asistenciator/ fuera del repositorio.
+# Se almacenan en /backups/bats/ fuera del repositorio.
 # Si se añade una carpeta backups/ local al proyecto, ignorarla también.
 backups/
 *.sql

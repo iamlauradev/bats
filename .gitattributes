@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Reglas de Git para line endings
+# BATS IoT — Reglas de Git para line endings
 # =============================================================================
 # Sin estas reglas, al clonar el repo en Windows Git convierte los archivos
 # de texto a CRLF (\r\n). El crond de Alpine y /bin/sh no toleran CRLF:

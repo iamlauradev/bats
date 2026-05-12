@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ASISTENCIATOR IoT — Script de restauración de base de datos
+# BATS IoT — Script de restauración de base de datos
 # =============================================================================
 # Autora  : Laura Linares — iamlaura.dev
 # Versión : 1.0
@@ -13,8 +13,8 @@
 #   ./scripts/restaurar.sh <fichero_backup>
 #
 # Ejemplos:
-#   ./scripts/restaurar.sh /backups/asistenciator/backup_20250428_030001.sql.gz
-#   ./scripts/restaurar.sh /backups/asistenciator/backup_20250428_030001.sql.gz --sin-confirmacion
+#   ./scripts/restaurar.sh /backups/bats/backup_20250428_030001.sql.gz
+#   ./scripts/restaurar.sh /backups/bats/backup_20250428_030001.sql.gz --sin-confirmacion
 #
 # Opciones:
 #   --sin-confirmacion   Salta la confirmación interactiva (útil en scripts)
@@ -38,12 +38,12 @@ if [ $# -lt 1 ]; then
     error "Uso: $0 <fichero_backup> [--sin-confirmacion]"
     echo ""
     echo "  Ejemplo:"
-    echo "    $0 /backups/asistenciator/backup_20250428_030001.sql.gz"
+    echo "    $0 /backups/bats/backup_20250428_030001.sql.gz"
     echo ""
     echo "  Backups disponibles:"
-    ls -lh /backups/asistenciator/backup_*.sql.gz 2>/dev/null \
+    ls -lh /backups/bats/backup_*.sql.gz 2>/dev/null \
         | awk '{print "    " $NF " (" $5 ")"}' \
-        || echo "    (ninguno encontrado en /backups/asistenciator/)"
+        || echo "    (ninguno encontrado en /backups/bats/)"
     exit 1
 fi
 
@@ -79,7 +79,7 @@ fi
 
 MYSQL_DATABASE=$(grep '^MYSQL_DATABASE=' "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
 MYSQL_ROOT_PASSWORD=$(grep '^MYSQL_ROOT_PASSWORD=' "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
-CONTENEDOR_DB="asistenciator_db"
+CONTENEDOR_DB="bats_db"
 
 # ── Comprobar que el contenedor está en ejecución ─────────────────────────────
 if ! docker inspect "$CONTENEDOR_DB" --format '{{.State.Running}}' 2>/dev/null | grep -q "true"; then
@@ -113,7 +113,7 @@ fi
 separador
 
 # ── Hacer un backup previo de seguridad ───────────────────────────────────────
-BACKUP_PREVIO_DIR="/backups/asistenciator"
+BACKUP_PREVIO_DIR="/backups/bats"
 BACKUP_PREVIO="${BACKUP_PREVIO_DIR}/pre_restauracion_$(date '+%Y%m%d_%H%M%S').sql.gz"
 mkdir -p "$BACKUP_PREVIO_DIR"
 

@@ -1,5 +1,5 @@
 -- =============================================================================
--- ASISTENCIATOR IoT — Esquema de base de datos v1.0
+-- BATS IoT — Esquema de base de datos v1.0
 -- =============================================================================
 -- Autora  : Laura Linares — iamlaura.dev
 -- Motor   : MariaDB 10.11
@@ -213,6 +213,6 @@ ON DUPLICATE KEY UPDATE valor = VALUES(valor);
 -- =============================================================================
 GRANT SELECT, INSERT, UPDATE, DELETE
     ON control_asistencia.*
-    TO 'asistenciator_app'@'%';
+    TO 'bats_app'@'%';
 
 FLUSH PRIVILEGES;

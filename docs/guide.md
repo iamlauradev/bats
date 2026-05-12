@@ -1,6 +1,6 @@
-# Guía de Despliegue y Mantenimiento — Asistenciator IoT
+# Guía de Despliegue y Mantenimiento — BATS IoT
 
-**Versión:** 2.5  
+**Versión:** 1.0  
 **Autora:** Laura Linares — iamlaura.dev
 
 ---
@@ -59,8 +59,8 @@ docker compose version
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/asistenciator-bluetooth-attendance.git
-cd asistenciator-bluetooth-attendance
+git clone https://github.com/tu-usuario/bats.git
+cd bats
 
 # Crear el fichero .env a partir de la plantilla
 cp .env.example .env
@@ -71,7 +71,7 @@ Rellenar **todas** las variables obligatorias. Como mínimo:
 
 ```env
 MYSQL_ROOT_PASSWORD=<contraseña_segura>
-MYSQL_USER=asistenciator_app
+MYSQL_USER=bats_app
 MYSQL_PASSWORD=<contraseña_segura>
 FLASK_SECRET_KEY=<cadena_aleatoria_32_chars>
 SCHEDULER_KEY=<cadena_aleatoria_32_chars>
@@ -95,7 +95,7 @@ Cloudflare Tunnel permite acceder al panel web desde cualquier dispositivo con H
 
 1. Ir a [one.dash.cloudflare.com](https://one.dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**
 2. Elegir **Cloudflared** como tipo de conector
-3. Nombrar el túnel (ej: `asistenciator`)
+3. Nombrar el túnel (ej: `bats`)
 4. Copiar el token que aparece en el paso de instalación (empieza por `eyJ...`)
 5. Añadirlo al `.env`:
 
@@ -215,7 +215,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=tu_cuenta@gmail.com
 EMAIL_PASSWORD=abcd efgh ijkl mnop
-EMAIL_FROM=Asistenciator <tu_cuenta@gmail.com>
+EMAIL_FROM=BATS <tu_cuenta@gmail.com>
 ```
 
 El correo al tutor legal se envía desde **Sistema → Alumnos** → botón de sobre, o automáticamente si está activado.
@@ -264,13 +264,13 @@ Añadir al crontab del host:
 
 ```bash
 # Backup diario a las 2:00 de la madrugada
-0 2 * * * /ruta/al/proyecto/scripts/backup.sh >> /var/log/asistenciator/backup.log 2>&1
+0 2 * * * /ruta/al/proyecto/scripts/backup.sh >> /var/log/bats/backup.log 2>&1
 ```
 
 ### Restaurar desde un backup
 
 ```bash
-./scripts/restaurar.sh ./backups/asistenciator_2025-11-15_02-00.sql.gz
+./scripts/restaurar.sh ./backups/bats_2025-11-15_02-00.sql.gz
 ```
 
 Ver el plan completo de recuperación ante desastres en [`DRP.md`](DRP.md).

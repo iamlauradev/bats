@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ASISTENCIATOR IoT — Instalador del cron de backup
+# BATS IoT — Instalador del cron de backup
 # =============================================================================
 # Ejecutar UNA SOLA VEZ en el host (Raspberry Pi) para programar el backup
 # automático diario a las 03:00.
@@ -14,9 +14,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_SCRIPT="${SCRIPT_DIR}/backup.sh"
-LOG_FILE="/var/log/asistenciator/backup.log"
-LOG_DIR="/var/log/asistenciator"
-BACKUP_DIR="/backups/asistenciator"
+LOG_FILE="/var/log/bats/backup.log"
+LOG_DIR="/var/log/bats"
+BACKUP_DIR="/backups/bats"
 
 # Comprobar que se ejecuta como root
 if [ "$(id -u)" -ne 0 ]; then

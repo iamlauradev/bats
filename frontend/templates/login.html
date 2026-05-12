@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>SYSTEM ACCESS — Asistenciator</title>
+    <title>SYSTEM ACCESS — BATS</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -317,10 +317,10 @@
     <div class="login-brand">
         <div>
             <div class="brand-logo">
-                <img src="{{ url_for('static', filename='img/asistenciator_logo.png') }}"
-                     alt="Asistenciator">
+                <img src="{{ url_for('static', filename='img/imagen.png') }}"
+                     alt="BATS">
             </div>
-            <p class="brand-name">ASISTENCIATOR</p>
+            <p class="brand-name">BATS</p>
             <p class="brand-sub">
                 Control de asistencia IoT<br>
                 Detección Bluetooth · RPi 4
@@ -335,7 +335,7 @@
             </ul>
         </div>
 
-        <p class="brand-footer">// iamlaura.dev · v2.5</p>
+        <p class="brand-footer">// iamlaura.dev · v1.0</p>
     </div>
 
     <!-- Panel derecho: formulario -->
@@ -390,7 +390,7 @@
 
 <script>
 (function() {
-    const saved = localStorage.getItem('asistenciator-theme') || 'dark';
+    const saved = localStorage.getItem('bats-theme') || 'dark';
     applyTheme(saved);
 })();
 
@@ -398,7 +398,7 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     const icon = document.getElementById('theme-icon');
     if (icon) icon.className = theme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
-    localStorage.setItem('asistenciator-theme', theme);
+    localStorage.setItem('bats-theme', theme);
 }
 
 function toggleTheme() {

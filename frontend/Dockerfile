@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Dockerfile del servidor Flask
+# BATS IoT — Dockerfile del servidor Flask
 # =============================================================================
 FROM python:3.11-slim
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# ASISTENCIATOR IoT — Script de generación de informe semanal v1.0
+# BATS IoT — Script de generación de informe semanal v1.0
 # =============================================================================
 # Ejecutado por crond cada viernes a las 23:59.
 # Llama al endpoint /informes/generar-cron del servidor Flask, autenticado
@@ -10,7 +10,7 @@
 # =============================================================================
 
 FLASK_URL="http://127.0.0.1:5000"
-LOG_TAG="[asistenciator-informe]"
+LOG_TAG="[bats-informe]"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 echo "$TIMESTAMP $LOG_TAG Iniciando generación de informe semanal (viernes 23:59)..."

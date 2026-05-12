@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =============================================================================
-# ASISTENCIATOR IoT — Generador de informes semanales v1.0
+# BATS IoT — Generador de informes semanales v1.0
 # =============================================================================
 # Ejecutado cada viernes a las 23:59 por el scheduler (cron).
 # También puede lanzarse manualmente desde la web (solo admin).
@@ -251,7 +251,7 @@ def generar_html(fecha_inicio: date, fecha_fin: date,
         <div style="background:#0f172a;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <div>
                 <p style="margin:0;font-size:1rem;font-weight:700;color:#60a5fa;">
-                    📡 Asistenciator — Informe Semanal
+                    📡 BATS — Informe Semanal
                 </p>
                 <p style="margin:2px 0 0;font-size:0.78rem;color:#64748b;">{nombre_centro}</p>
             </div>
@@ -321,7 +321,7 @@ def generar_html(fecha_inicio: date, fecha_fin: date,
     </div>
 
     <p style="text-align:center;font-size:0.7rem;color:#94a3b8;margin-top:8px;">
-        Generado automáticamente por Asistenciator · {nombre_centro}
+        Generado automáticamente por BATS · {nombre_centro}
     </p>
 </div>
 

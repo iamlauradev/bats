@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# ASISTENCIATOR IoT — Script de escaneo automático v1.0
+# BATS IoT — Script de escaneo automático v1.0
 # =============================================================================
 # Ejecutado por crond cada minuto (lunes a viernes, 07:00 a 22:59).
 #
@@ -17,7 +17,7 @@
 # =============================================================================
 
 FLASK_URL="http://127.0.0.1:5000"
-LOG_TAG="[asistenciator-cron]"
+LOG_TAG="[bats-cron]"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 # ── Fase 1: consultar si hay franja activa ────────────────────────────────────

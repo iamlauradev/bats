@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Dockerfile del scheduler
+# BATS IoT — Dockerfile del scheduler
 # =============================================================================
 FROM alpine:3.19
 
@@ -18,6 +18,6 @@ COPY crontab /etc/crontabs/root
 RUN sed -i 's/\r$//' /scheduler/escaneo.sh /scheduler/informe.sh /etc/crontabs/root \
  && chmod +x /scheduler/escaneo.sh /scheduler/informe.sh
 
-RUN mkdir -p /var/log/asistenciator
+RUN mkdir -p /var/log/bats
 
 CMD ["crond", "-f", "-l", "2"]

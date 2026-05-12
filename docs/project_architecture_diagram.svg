@@ -3,7 +3,7 @@
      font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
 
     <!-- =========================================================================
-         ASISTENCIATOR IoT v2.4 — Diagrama vertical de arquitectura
+         BATS IoT v1.0 — Diagrama vertical de arquitectura
          Pensado para insertar en una hoja de Google Docs (orientación retrato).
          Exportable a PNG con cualquier conversor (rsvg-convert, Inkscape,
          o desde el navegador con clic derecho > Guardar imagen como).
@@ -59,10 +59,10 @@
          TÍTULO
          ===================================================================== -->
     <text x="320" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#0f1c2e">
-        Asistenciator IoT — Arquitectura
+        BATS IoT — Arquitectura
     </text>
     <text x="320" y="58" text-anchor="middle" font-size="11" fill="#5b6b7c" letter-spacing="2">
-        v2.4 · DESPLIEGUE FINAL EN RASPBERRY PI 4
+        v1.0 · DESPLIEGUE FINAL EN RASPBERRY PI 4
     </text>
     <line x1="180" y1="70" x2="460" y2="70" stroke="#cfd6df" stroke-width="1"/>
 

@@ -1,4 +1,4 @@
-# Pruebas — Asistenciator IoT
+# Pruebas — BATS IoT
 
 Referencia operativa de todos los casos de prueba del proyecto.  
 Actualizar esta hoja antes de cualquier cambio importante para confirmar que no hay regresiones.
@@ -490,7 +490,7 @@ wait
 - El mensaje llega al chat de Telegram.
 - En los logs del contenedor `web`:
 ```bash
-docker logs asistenciator_web | grep NOTIFICACION_TELEGRAM
+docker logs bats_web | grep NOTIFICACION_TELEGRAM
 ```
 Output esperado: línea con `NOTIFICACION_TELEGRAM` y el nombre del alumno.
 
@@ -508,7 +508,7 @@ Output esperado: línea con `NOTIFICACION_TELEGRAM` y el nombre del alumno.
 - El escaneo termina correctamente (HTTP 200).
 - En logs:
 ```bash
-docker logs asistenciator_web | grep TELEGRAM_DESACTIVADO
+docker logs bats_web | grep TELEGRAM_DESACTIVADO
 ```
 No se produce excepción ni fallo en el escaneo.
 
@@ -528,7 +528,7 @@ No se produce excepción ni fallo en el escaneo.
 - El correo llega a la bandeja del tutor.
 - En logs:
 ```bash
-docker logs asistenciator_web | grep NOTIFICACION_EMAIL_OK
+docker logs bats_web | grep NOTIFICACION_EMAIL_OK
 ```
 
 **Resultado:** ✅
@@ -545,7 +545,7 @@ docker logs asistenciator_web | grep NOTIFICACION_EMAIL_OK
 - La web muestra un mensaje de error visible al usuario (no un 500 en blanco).
 - En logs:
 ```bash
-docker logs asistenciator_web | grep EMAIL_ERROR
+docker logs bats_web | grep EMAIL_ERROR
 ```
 
 **Resultado:** ✅
@@ -573,11 +573,11 @@ docker logs asistenciator_web | grep EMAIL_ERROR
 **Cómo probarlo:**
 ```bash
 # Verificar que el cron de informes está configurado en el contenedor scheduler
-docker exec asistenciator_scheduler crontab -l
+docker exec bats_scheduler crontab -l
 # Debe aparecer una línea tipo: 1 0 * * 1 /scripts/informe.sh
 
 # Simular la ejecución manual del script:
-docker exec asistenciator_scheduler /scripts/informe.sh
+docker exec bats_scheduler /scripts/informe.sh
 ```
 
 **Qué observar:**
@@ -647,7 +647,7 @@ El fichero descargado debe ser HTML válido.
 
 **Cómo probarlo:**
 ```bash
-cd ~/iot-bluetooth-attendance
+cd ~/bats
 ./scripts/backup.sh
 ```
 
@@ -661,11 +661,11 @@ cd ~/iot-bluetooth-attendance
 
 **Verificar el fichero:**
 ```bash
-ls -lh /backups/asistenciator/backup_*.sql.gz
+ls -lh /backups/bats/backup_*.sql.gz
 # -rw------- (chmod 600)
 
 # Comprobar que no está vacío y es gzip válido:
-gzip -t /backups/asistenciator/backup_<TIMESTAMP>.sql.gz && echo "OK"
+gzip -t /backups/bats/backup_<TIMESTAMP>.sql.gz && echo "OK"
 ```
 
 **Resultado:** ✅
@@ -684,7 +684,7 @@ docker compose start db
 
 **Output esperado:**
 ```
-[...] ERROR: El contenedor asistenciator_db no está en ejecución.
+[...] ERROR: El contenedor bats_db no está en ejecución.
 [...]        Ejecuta: docker compose up -d db
 Código de salida: 1
 ```
@@ -700,7 +700,7 @@ El script aborta con código ≠ 0 y no crea ningún fichero corrupto.
 **Cómo probarlo:**
 ```bash
 # Crear un fichero de backup con fecha antigua (simulado)
-touch -d "31 days ago" /backups/asistenciator/backup_19990101_000000.sql.gz
+touch -d "31 days ago" /backups/bats/backup_19990101_000000.sql.gz
 
 # Ejecutar el backup (activará la limpieza de retención)
 ./scripts/backup.sh
@@ -713,7 +713,7 @@ touch -d "31 days ago" /backups/asistenciator/backup_19990101_000000.sql.gz
 
 Verificar que el fichero antiguo ya no existe:
 ```bash
-ls /backups/asistenciator/backup_19990101_000000.sql.gz
+ls /backups/bats/backup_19990101_000000.sql.gz
 # ls: no existe
 ```
 
@@ -729,7 +729,7 @@ ls /backups/asistenciator/backup_19990101_000000.sql.gz
 ./scripts/backup.sh
 
 # 2. Anotar el nombre del fichero generado
-BACKUP=$(ls -t /backups/asistenciator/backup_*.sql.gz | head -1)
+BACKUP=$(ls -t /backups/bats/backup_*.sql.gz | head -1)
 
 # 3. Restaurar (en el mismo entorno o en uno aislado)
 ./scripts/restaurar.sh "$BACKUP"
@@ -797,7 +797,7 @@ docker compose logs -f web db
 
 **Verificar el healthcheck activo:**
 ```bash
-docker inspect asistenciator_db --format '{{.State.Health.Status}}'
+docker inspect bats_db --format '{{.State.Health.Status}}'
 # → healthy
 ```
 
@@ -811,7 +811,7 @@ docker inspect asistenciator_db --format '{{.State.Health.Status}}'
 docker compose stop web
 
 # Esperar que el cron ejecute (o forzarlo manualmente)
-docker exec asistenciator_scheduler /scripts/escaneo.sh
+docker exec bats_scheduler /scripts/escaneo.sh
 
 # Volver a levantar web
 docker compose start web
@@ -821,7 +821,7 @@ docker compose start web
 - El script registra el error pero el cron no muere.
 - Revisar logs del scheduler:
 ```bash
-docker logs asistenciator_scheduler | tail -5
+docker logs bats_scheduler | tail -5
 # → ERROR: /estado-franja devolvió HTTP 000. ¿Está Flask activo?
 ```
 
@@ -838,7 +838,7 @@ docker logs asistenciator_scheduler | tail -5
 - La URL pública vuelve a responder.
 - Log del contenedor `cloudflared`:
 ```bash
-docker logs asistenciator_cloudflared | tail -10
+docker logs bats_cloudflared | tail -10
 # → Reconnecting tunnel connection
 # → Connection established
 ```

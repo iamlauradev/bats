@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Servidor Web Flask v1.0
+# BATS IoT — Servidor Web Flask v1.0
 # =============================================================================
 # Autora  : Laura Linares — iamlaura.dev
 # =============================================================================
@@ -91,7 +91,7 @@ SESSION_TIMEOUT = timedelta(hours=2)
 # LOGGING CENTRALIZADO
 # =============================================================================
 def _configurar_logging():
-    log_dir  = '/var/log/asistenciator'
+    log_dir  = '/var/log/bats'
     log_file = os.path.join(log_dir, 'app.log')
     try:
         os.makedirs(log_dir, exist_ok=True)
@@ -112,7 +112,7 @@ def _configurar_logging():
         datefmt='%Y-%m-%d %H:%M:%S',
     ))
 
-    logger = logging.getLogger('asistenciator')
+    logger = logging.getLogger('bats')
     logger.setLevel(logging.INFO)
     if not logger.handlers:
         logger.addHandler(handler)

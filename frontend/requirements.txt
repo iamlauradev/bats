@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Dependencias Python v1.0
+# BATS IoT — Dependencias Python v1.0
 # =============================================================================
 # Instalar dentro del contenedor Docker: pip install -r requirements.txt
 # Para desarrollo local: pip install -r requirements.txt --break-system-packages

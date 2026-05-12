@@ -1,5 +1,5 @@
 # =============================================================================
-# ASISTENCIATOR IoT — Módulo de correo a tutores legales
+# BATS IoT — Módulo de correo a tutores legales
 # =============================================================================
 # Envía correos automáticos a los tutores legales de alumnos ausentes.
 # Usa smtplib nativo de Python con Gmail + contraseña de aplicación.
@@ -83,7 +83,7 @@ def _construir_html(nombre_alumno: str, grupo: str,
         <tr>
           <td style="background:#12243a;padding:28px 32px;">
             <p style="margin:0;font-size:1rem;font-weight:700;color:#60a5fa;">
-              📡 Asistenciator
+              📡 BATS
             </p>
             <p style="margin:4px 0 0;font-size:0.75rem;color:#64748b;">
               {nombre_centro}
@@ -149,7 +149,7 @@ def _construir_html(nombre_alumno: str, grupo: str,
 
             <p style="margin:0;font-size:0.82rem;color:#94a3b8;line-height:1.5;">
               Este mensaje ha sido generado automáticamente por el sistema
-              de control de asistencia Asistenciator. Si tiene alguna duda,
+              de control de asistencia BATS. Si tiene alguna duda,
               contacte con el tutor/a del grupo.
             </p>
           </td>
@@ -159,7 +159,7 @@ def _construir_html(nombre_alumno: str, grupo: str,
         <tr>
           <td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e2e8f0;">
             <p style="margin:0;font-size:0.72rem;color:#94a3b8;">
-              {nombre_centro} · Sistema IoT Bluetooth · Asistenciator
+              {nombre_centro} · Sistema IoT Bluetooth · BATS
             </p>
           </td>
         </tr>
@@ -222,7 +222,7 @@ def enviar_correo_tutor(nombre_alumno: str, grupo: str,
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = asunto
-    msg['From']    = f"Asistenciator <{config['remite']}>"
+    msg['From']    = f"BATS <{config['remite']}>"
     msg['To']      = email_tutor
 
     html = _construir_html(nombre_alumno, grupo, horario_activo, nombre_centro)
