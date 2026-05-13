@@ -12,7 +12,7 @@
 # Flask sigue escuchando solo en localhost:5000 — no está expuesto al exterior.
 #
 # Primer arranque:
-#   1. Crea el túnel en https://one.dash.cloudflare.com → Networks → Tunnels
+#   1. Crea el túnel en https://dash.cloudflare.com → Networks → Tunnels
 #   2. Copia el token del túnel en .env como CLOUDFLARE_TUNNEL_TOKEN
 #   3. cp .env.example .env  (y rellena todas las claves)
 #   4. docker compose up -d
@@ -103,7 +103,7 @@ services:
   # ---------------------------------------------------------------------------
   # CLOUDFLARE TUNNEL
   # Conecta la RPi con Cloudflare sin abrir ningún puerto en el router.
-  # El token se obtiene en: one.dash.cloudflare.com → Networks → Tunnels
+  # El token se obtiene en: dash.cloudflare.com → Networks → Tunnels
   # Apunta a http://localhost:5000 (Flask) desde el dashboard de Cloudflare.
   # ---------------------------------------------------------------------------
   cloudflared:

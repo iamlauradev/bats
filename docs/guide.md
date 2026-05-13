@@ -93,7 +93,7 @@ Cloudflare Tunnel permite acceder al panel web desde cualquier dispositivo con H
 
 ### Crear el túnel
 
-1. Ir a [one.dash.cloudflare.com](https://one.dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**
+1. Ir a [dash.cloudflare.com](https://dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**
 2. Elegir **Cloudflared** como tipo de conector
 3. Nombrar el túnel (ej: `bats`)
 4. Copiar el token que aparece en el paso de instalación (empieza por `eyJ...`)
