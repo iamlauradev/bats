@@ -104,7 +104,7 @@ bats/
 │
 ├── scheduler/                  # Contenedor Alpine con crond
 │   ├── Dockerfile
-│   ├── crontab                 # Escaneo cada 10 min (L-V) + informe viernes 23:59
+│   ├── crontab                 # Escaneo cada minuto (L-V) + informe viernes 23:59
 │   ├── escaneo.sh              # Llama a POST /escanear con X-Scheduler-Key
 │   └── informe.sh              # Llama a POST /informes/generar-cron
 │
@@ -205,7 +205,7 @@ Consulta `.env.example` para la lista completa con comentarios.
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Tutor** | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| **Profesor** | ✅ | Solo lectura | — | — | — | — |
+| **Profesor** | ✅ | Solo horarios (lectura) | — | — | Pausar escaneo | — |
 
 ---
 
