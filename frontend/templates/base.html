@@ -1067,9 +1067,11 @@
         </a>
 
         <a href="{{ url_for('gestion_asignaturas') }}"
-           class="{{ 'active' if request.endpoint in ('gestion_asignaturas','add_asignatura','edit_asignatura') else '' }}">
+           class="{{ 'active' if request.endpoint in ('gestion_asignaturas','add_asignatura','edit_asignatura') else '' }}{{ '' if current_user.es_tutor else ' nav-locked' }}"
+           {% if not current_user.es_tutor %}title="Acceso restringido a tutores y administradores"{% endif %}>
             <i class="bi bi-hexagon-fill"></i>
             Asignaturas
+            {% if not current_user.es_tutor %}<i class="bi bi-lock-fill nav-lock-icon"></i>{% endif %}
         </a>
 
         <div class="sidebar-section" style="margin-top:6px;">Archivos</div>

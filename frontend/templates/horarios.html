@@ -153,7 +153,12 @@
         <div class="empty-state">
             <i class="bi bi-calendar-x"></i>
             <p><strong>No hay franjas horarias definidas.</strong><br>
-               Pulsa "Añadir franjas" para crear la primera.</p>
+               {% if current_user.es_tutor %}
+               Pulsa "Añadir franjas" para crear la primera.
+               {% else %}
+               Contacta con un tutor o administrador para configurar el horario.
+               {% endif %}
+            </p>
         </div>
     </div>
 </div>
