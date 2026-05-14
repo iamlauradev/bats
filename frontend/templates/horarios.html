@@ -117,6 +117,21 @@
                                          style="font-size:10px;opacity:.75;margin-top:3px;">
                                         {{ h.aula }}
                                     </div>
+                                    {% if current_user.es_admin %}
+                                    {# Botón override manual — permite escanear esta clase en cualquier momento #}
+                                    <form action="{{ url_for('toggle_override', id_horario=h.id_horario) }}"
+                                          method="POST" class="d-inline">
+                                        <button type="submit" class="cell-override-btn"
+                                                style="position:absolute;bottom:4px;right:4px;
+                                                       background:none;border:none;padding:2px 5px;
+                                                       cursor:pointer;transition:opacity .15s;
+                                                       font-size:13px;
+                                                       {% if override_id == h.id_horario %}opacity:1;color:#fbbf24;{% else %}opacity:0;color:var(--tx2);{% endif %}"
+                                                title="{% if override_id == h.id_horario %}Desactivar clase manual{% else %}Activar como clase manual{% endif %}">
+                                            <i class="bi bi-broadcast{% if override_id == h.id_horario %}-pin-fill{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
                                     {% if current_user.es_tutor %}
                                     <form action="{{ url_for('delete_horario', id_horario=h.id_horario) }}"
                                           method="POST" class="d-inline"
@@ -311,12 +326,20 @@ aplicarColoresCeldas();
 const _origToggle = window.toggleTheme;
 window.toggleTheme = function () { _origToggle(); aplicarColoresCeldas(); };
 
-// Botón borrar visible al hover
+// Botones de celda (borrar + override) visibles al hover
 document.querySelectorAll('.horario-cell').forEach(cel => {
-    const btn = cel.querySelector('.cell-del-btn');
-    if (!btn) return;
-    cel.addEventListener('mouseenter', () => btn.style.opacity = '1');
-    cel.addEventListener('mouseleave', () => btn.style.opacity = '0');
+    const btnDel      = cel.querySelector('.cell-del-btn');
+    const btnOverride = cel.querySelector('.cell-override-btn');
+    // El botón override con icono pin-fill (activo) siempre visible
+    const overrideActivo = btnOverride?.querySelector('.bi-broadcast-pin-fill');
+    cel.addEventListener('mouseenter', () => {
+        if (btnDel) btnDel.style.opacity = '1';
+        if (btnOverride && !overrideActivo) btnOverride.style.opacity = '1';
+    });
+    cel.addEventListener('mouseleave', () => {
+        if (btnDel) btnDel.style.opacity = '0';
+        if (btnOverride && !overrideActivo) btnOverride.style.opacity = '0';
+    });
 });
 
 /* ─────────────────────────────────────────

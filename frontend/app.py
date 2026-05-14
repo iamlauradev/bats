@@ -1558,6 +1558,7 @@ def gestion_horarios():
     for h in horarios:
         h['siglas'] = siglas_map.get(h['id_asignatura'], calcular_siglas(h['asignatura']))
 
+    override_id = leer_config(cursor, 'horario_override')
     conexion.close()
 
     return render_template(
@@ -1566,7 +1567,26 @@ def gestion_horarios():
         asignaturas     = asignaturas,
         color_map       = color_map,
         dias            = DIAS_SEMANA,
+        override_id     = int(override_id) if override_id else None,
     )
+
+
+@app.route('/horarios/override/<int:id_horario>', methods=['POST'])
+@login_required
+@rol_requerido('admin')
+def toggle_override(id_horario):
+    """Activa o desactiva el override manual para una franja horaria concreta.
+    Si ya es la franja activa, la desactiva. Si es otra, la activa."""
+    conexion = conectar_db()
+    cursor   = conexion.cursor()
+    actual   = leer_config(cursor, 'horario_override')
+    if actual == str(id_horario):
+        escribir_config(cursor, 'horario_override', '')   # desactivar
+    else:
+        escribir_config(cursor, 'horario_override', str(id_horario))  # activar
+    conexion.commit()
+    conexion.close()
+    return redirect(url_for('gestion_horarios'))
 
 
 @app.route('/horarios/add', methods=['POST'])
