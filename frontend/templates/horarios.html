@@ -121,15 +121,25 @@
                                     {# Botón override manual — permite escanear esta clase en cualquier momento #}
                                     <form action="{{ url_for('toggle_override', id_horario=h.id_horario) }}"
                                           method="POST" class="d-inline">
+                                        {% if override_id == h.id_horario %}
+                                        <button type="submit" class="cell-override-btn cell-override-activo"
+                                                style="position:absolute;bottom:4px;right:4px;
+                                                       background:none;border:none;padding:2px 5px;
+                                                       cursor:pointer;opacity:1;color:#fbbf24;
+                                                       font-size:13px;"
+                                                title="Clase manual activa — clic para desactivar">
+                                            <i class="bi bi-broadcast"></i>
+                                        </button>
+                                        {% else %}
                                         <button type="submit" class="cell-override-btn"
                                                 style="position:absolute;bottom:4px;right:4px;
                                                        background:none;border:none;padding:2px 5px;
-                                                       cursor:pointer;transition:opacity .15s;
-                                                       font-size:13px;
-                                                       {% if override_id == h.id_horario %}opacity:1;color:#fbbf24;{% else %}opacity:0;color:var(--tx2);{% endif %}"
-                                                title="{% if override_id == h.id_horario %}Desactivar clase manual{% else %}Activar como clase manual{% endif %}">
-                                            <i class="bi bi-broadcast{% if override_id == h.id_horario %}-pin-fill{% endif %}"></i>
+                                                       cursor:pointer;opacity:0;color:var(--tx2);
+                                                       transition:opacity .15s;font-size:13px;"
+                                                title="Activar como clase manual">
+                                            <i class="bi bi-broadcast"></i>
                                         </button>
+                                        {% endif %}
                                     </form>
                                     {% endif %}
                                     {% if current_user.es_tutor %}
@@ -330,8 +340,8 @@ window.toggleTheme = function () { _origToggle(); aplicarColoresCeldas(); };
 document.querySelectorAll('.horario-cell').forEach(cel => {
     const btnDel      = cel.querySelector('.cell-del-btn');
     const btnOverride = cel.querySelector('.cell-override-btn');
-    // El botón override con icono pin-fill (activo) siempre visible
-    const overrideActivo = btnOverride?.querySelector('.bi-broadcast-pin-fill');
+    // Si el botón tiene clase "activo", su opacidad es fija (siempre visible)
+    const overrideActivo = btnOverride?.classList.contains('cell-override-activo');
     cel.addEventListener('mouseenter', () => {
         if (btnDel) btnDel.style.opacity = '1';
         if (btnOverride && !overrideActivo) btnOverride.style.opacity = '1';
