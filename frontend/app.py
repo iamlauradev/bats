@@ -973,8 +973,19 @@ def escanear():
     if not current_user.is_authenticated and not _es_llamada_scheduler():
         return redirect(url_for('login', next=request.path))
 
+    # ── Escaneo forzado por el admin (bypasa horario y recreo) ────────────────
+    # Solo un admin autenticado puede forzar el escaneo fuera del horario
+    # configurado. El scheduler nunca usa este flag.
+    force = False
+    if current_user.is_authenticated and current_user.es_admin:
+        try:
+            body  = request.get_json(silent=True) or {}
+            force = bool(body.get('force', False))
+        except Exception:
+            pass
+
     # ── Bloqueo de fin de semana ───────────────────────────────────────────────
-    if datetime.now().weekday() >= 5:  # 5=sábado, 6=domingo
+    if not force and datetime.now().weekday() >= 5:  # 5=sábado, 6=domingo
         return jsonify({
             "status":  "fin_de_semana",
             "mensaje": "Sistema en reposo. No se realizan escaneos durante el fin de semana."
@@ -991,8 +1002,9 @@ def escanear():
     # Aplica también al botón manual: si estamos fuera del horario que el
     # admin ha configurado, no se escanea (evita registrar ausencias antes
     # de empezar las clases o después de terminar).
+    # Con force=True el admin puede saltarse esta restricción.
     estado = estado_horario_escaneo(cursor)
-    if not estado['dentro_horario']:
+    if not force and not estado['dentro_horario']:
         conexion.close()
         if estado['motivo'] == 'turnos_desactivados':
             msg = "Los dos turnos de escaneo están desactivados en la configuración."
@@ -1000,7 +1012,8 @@ def escanear():
             msg = "Fuera del horario de escaneo configurado."
         return jsonify({"status": "fuera_horario", "mensaje": msg}), 423
 
-    turno_activo = estado['turno_activo']
+    # En escaneo forzado fuera de horario no hay turno definido → escanear todos.
+    turno_activo = estado['turno_activo'] if estado['dentro_horario'] else None
 
     from datetime import time as dtime
     ahora_t = datetime.now().time()
@@ -1021,13 +1034,13 @@ def escanear():
     recreo_tarde_inicio = leer_config(cursor, 'recreo_tarde_inicio')
     recreo_tarde_fin    = leer_config(cursor, 'recreo_tarde_fin')
 
-    if _en_recreo(recreo_inicio, recreo_fin):
+    if not force and _en_recreo(recreo_inicio, recreo_fin):
         conexion.close()
         return jsonify({
             "status":  "recreo",
             "mensaje": f"Hora de recreo de mañana ({recreo_inicio}–{recreo_fin}). El escaneo se reanudará automáticamente."
         }), 423
-    if _en_recreo(recreo_tarde_inicio, recreo_tarde_fin):
+    if not force and _en_recreo(recreo_tarde_inicio, recreo_tarde_fin):
         conexion.close()
         return jsonify({
             "status":  "recreo",

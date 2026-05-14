@@ -52,10 +52,18 @@
                     <i class="bi bi-play-fill"></i> REANUDAR
                 </button>
             {% elif fuera_horario_escaneo %}
-                <button class="btn-scan pausado" disabled
-                        title="Estás fuera del horario de escaneo configurado">
-                    <i class="bi bi-moon"></i> FUERA DE HORARIO
-                </button>
+                {% if current_user.es_admin %}
+                    <button id="btnEscanear" class="btn-scan forzado" onclick="iniciarEscaneo(true)"
+                            title="Escaneo manual fuera del horario configurado">
+                        <i class="bi bi-broadcast" id="btnIcono"></i>
+                        <span id="btnTexto">ESCANEO MANUAL</span>
+                    </button>
+                {% else %}
+                    <button class="btn-scan pausado" disabled
+                            title="Estás fuera del horario de escaneo configurado">
+                        <i class="bi bi-moon"></i> FUERA DE HORARIO
+                    </button>
+                {% endif %}
             {% else %}
                 <button id="btnEscanear" class="btn-scan" onclick="iniciarEscaneo()">
                     <i class="bi bi-broadcast" id="btnIcono"></i>
@@ -408,7 +416,7 @@
 
 {% block scripts %}
 <script>
-function iniciarEscaneo() {
+function iniciarEscaneo(force) {
     const btn   = document.getElementById('btnEscanear');
     const icono = document.getElementById('btnIcono');
     const texto = document.getElementById('btnTexto');
@@ -420,7 +428,7 @@ function iniciarEscaneo() {
     fetch('/escanear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify(force ? { force: true } : {})
     })
     .then(r => {
         if (r.status === 409) { alert('Ya hay un escaneo en curso.'); window.location.reload(); return null; }

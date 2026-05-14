@@ -766,6 +766,18 @@
             cursor: not-allowed;
         }
 
+        .btn-scan.forzado {
+            border-color: var(--warning-tx);
+            color: var(--warning-tx);
+            box-shadow: 0 0 12px rgba(255,214,0,0.12), inset 0 0 12px rgba(255,214,0,0.03);
+        }
+
+        .btn-scan.forzado:hover {
+            background: rgba(255,214,0,0.08);
+            box-shadow: 0 0 20px rgba(255,214,0,0.3), inset 0 0 20px rgba(255,214,0,0.05);
+            transform: translateY(-1px);
+        }
+
         .btn-export {
             background: transparent;
             color: var(--success-tx);
