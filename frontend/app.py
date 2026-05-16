@@ -365,9 +365,7 @@ class Usuario(UserMixin):
     @property
     def iniciales(self):
         partes = self.nombre.strip().split()
-        if len(partes) >= 2:
-            return (partes[0][0] + partes[-1][0]).upper()
-        return self.nombre[:2].upper()
+        return ''.join(p[0] for p in partes if p).upper() or '?'
 
 
 @login_manager.user_loader
@@ -609,9 +607,7 @@ def _actualizar_profesores_asignatura(cursor, id_asignatura: int, ids_profesores
 
 def obtener_iniciales(nombre_completo: str) -> str:
     partes = nombre_completo.strip().split()
-    if len(partes) >= 2:
-        return (partes[0][0] + partes[-1][0]).upper()
-    return nombre_completo[:2].upper() if nombre_completo else '?'
+    return ''.join(p[0] for p in partes if p).upper() or '?'
 
 
 def obtener_color_avatar(nombre: str) -> str:
