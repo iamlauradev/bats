@@ -979,13 +979,26 @@ def escanear():
     force = False
     if current_user.is_authenticated and current_user.es_admin:
         try:
-            body  = request.get_json(silent=True) or {}
+            # force=True en get_json ignora el Content-Type y siempre intenta
+            # parsear el body como JSON. Necesario porque proxies (Cloudflare,
+            # etc.) pueden modificar o no reenviar la cabecera correctamente.
+            body  = request.get_json(silent=True, force=True) or {}
             force = bool(body.get('force', False))
         except Exception:
             pass
 
+    # ── Comprobar override antes del bloqueo de fin de semana ─────────────────
+    # Si hay un override manual activo, se considera que hay clase ahora mismo
+    # independientemente del día. Esto permite al admin lanzar escaneos en
+    # fin de semana sin necesidad de pulsar el botón forzado.
+    conexion_pre = conectar_db()
+    cursor_pre   = conexion_pre.cursor()
+    override_id_pre = leer_config(cursor_pre, 'horario_override')
+    override_activo_pre = bool(override_id_pre)
+    conexion_pre.close()
+
     # ── Bloqueo de fin de semana ───────────────────────────────────────────────
-    if not force and datetime.now().weekday() >= 5:  # 5=sábado, 6=domingo
+    if not force and not override_activo_pre and datetime.now().weekday() >= 5:
         return jsonify({
             "status":  "fin_de_semana",
             "mensaje": "Sistema en reposo. No se realizan escaneos durante el fin de semana."
@@ -1375,6 +1388,56 @@ def toggle_alumno(id_alumno):
 # =============================================================================
 # NOTIFICAR TUTOR LEGAL
 # =============================================================================
+
+@app.route('/asistencia/editar/<int:id_alumno>', methods=['POST'])
+@login_required
+def editar_asistencia(id_alumno):
+    """
+    Edición manual del estado de asistencia de un alumno para hoy.
+    Accesible por todos los roles (admin, tutor, profesor).
+
+    Body JSON: { "estado": "PRESENTE" | "AUSENTE" | "SIN_DATOS" }
+
+    SIN_DATOS elimina el registro del día en lugar de escribir un valor
+    especial, porque en la BD la ausencia de fila == sin datos.
+    """
+    body        = request.get_json(silent=True, force=True) or {}
+    nuevo_estado = body.get('estado', '').upper()
+
+    if nuevo_estado not in ('PRESENTE', 'AUSENTE', 'SIN_DATOS'):
+        return jsonify({"status": "error", "mensaje": "Estado inválido."}), 400
+
+    conexion = conectar_db()
+    cursor   = conexion.cursor()
+
+    cursor.execute(
+        "SELECT id_alumno, nombre FROM alumnos WHERE id_alumno = %s AND activo = TRUE",
+        (id_alumno,)
+    )
+    alumno = cursor.fetchone()
+    if not alumno:
+        conexion.close()
+        return jsonify({"status": "error", "mensaje": "Alumno no encontrado."}), 404
+
+    hoy = date.today()
+
+    if nuevo_estado == 'SIN_DATOS':
+        cursor.execute(
+            "DELETE FROM estado_alumno_dia WHERE id_alumno = %s AND fecha = %s",
+            (id_alumno, hoy)
+        )
+    else:
+        upsert_estado_dia(cursor, id_alumno, hoy, nuevo_estado)
+
+    conexion.commit()
+    conexion.close()
+
+    log.info(
+        f"ASISTENCIA_MANUAL usuario={current_user.nombre} "
+        f"alumno={alumno['nombre']} estado={nuevo_estado} fecha={hoy}"
+    )
+    return jsonify({"status": "ok", "estado": nuevo_estado})
+
 
 @app.route('/alumnos/notificar-tutor/<int:id_alumno>', methods=['POST'])
 @login_required

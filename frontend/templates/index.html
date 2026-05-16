@@ -303,6 +303,47 @@
                                 <i class="bi bi-dash"></i>---
                             </span>
                         {% endif %}
+
+                        <!-- Botón de edición manual — visible para todos los roles -->
+                        <div class="edit-asistencia-wrap" style="position:relative;display:inline-block;">
+                            <button class="btn-edit-asistencia"
+                                    onclick="toggleEditMenu(this, {{ alumno.id_alumno }})"
+                                    title="Editar asistencia manualmente"
+                                    style="background:none;border:1px solid var(--tx2);
+                                           color:var(--tx2);border-radius:2px;
+                                           padding:3px 6px;cursor:pointer;font-size:11px;
+                                           transition:border-color .15s,color .15s;">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <div class="edit-asistencia-menu" id="edit-menu-{{ alumno.id_alumno }}"
+                                 style="display:none;position:absolute;right:0;top:calc(100% + 4px);
+                                        background:var(--bg2);border:1px solid var(--border);
+                                        border-radius:4px;z-index:200;min-width:130px;
+                                        box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+                                <button onclick="editarAsistencia({{ alumno.id_alumno }}, 'PRESENTE')"
+                                        style="display:block;width:100%;text-align:left;background:none;
+                                               border:none;padding:8px 12px;cursor:pointer;
+                                               color:var(--green);font-family:'Rajdhani',sans-serif;
+                                               font-size:13px;font-weight:600;letter-spacing:.04em;">
+                                    <i class="bi bi-check-lg me-1"></i>PRESENTE
+                                </button>
+                                <button onclick="editarAsistencia({{ alumno.id_alumno }}, 'AUSENTE')"
+                                        style="display:block;width:100%;text-align:left;background:none;
+                                               border:none;padding:8px 12px;cursor:pointer;
+                                               color:var(--red);font-family:'Rajdhani',sans-serif;
+                                               font-size:13px;font-weight:600;letter-spacing:.04em;">
+                                    <i class="bi bi-x-lg me-1"></i>AUSENTE
+                                </button>
+                                <button onclick="editarAsistencia({{ alumno.id_alumno }}, 'SIN_DATOS')"
+                                        style="display:block;width:100%;text-align:left;background:none;
+                                               border:none;padding:8px 12px;cursor:pointer;
+                                               color:var(--tx2);font-family:'Rajdhani',sans-serif;
+                                               font-size:13px;font-weight:600;letter-spacing:.04em;
+                                               border-top:1px solid var(--border);">
+                                    <i class="bi bi-dash me-1"></i>LIMPIAR
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -440,6 +481,42 @@ function iniciarEscaneo(force) {
     })
     .then(data => { if (data && data.status === 'ok') setTimeout(() => window.location.reload(), 400); })
     .catch(() => { alert('Error de conexi\xc3\xb3n.'); window.location.reload(); });
+}
+
+// ── Edición manual de asistencia ────────────────────────────────────────────
+
+function toggleEditMenu(btn, idAlumno) {
+    // Cierra cualquier otro menú abierto
+    document.querySelectorAll('.edit-asistencia-menu').forEach(m => {
+        if (m.id !== 'edit-menu-' + idAlumno) m.style.display = 'none';
+    });
+    const menu = document.getElementById('edit-menu-' + idAlumno);
+    const visible = menu.style.display === 'block';
+    menu.style.display = visible ? 'none' : 'block';
+}
+
+// Cierra menús al hacer clic fuera
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.edit-asistencia-wrap')) {
+        document.querySelectorAll('.edit-asistencia-menu').forEach(m => m.style.display = 'none');
+    }
+});
+
+function editarAsistencia(idAlumno, estado) {
+    fetch('/asistencia/editar/' + idAlumno, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: estado })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'ok') {
+            window.location.reload();
+        } else {
+            alert(d.mensaje || 'Error al actualizar la asistencia.');
+        }
+    })
+    .catch(() => alert('Error de conexión.'));
 }
 
 function toggleEscaneo(pausar) {
