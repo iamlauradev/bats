@@ -258,7 +258,7 @@ def antes_de_peticion():
                 flash('Tu sesión ha expirado por inactividad. Vuelve a iniciar sesión.', 'warning')
                 return redirect(url_for('login'))
 
-        # Sólo renovamos la marca de actividad si la petición no es polling
+        # Sólo se renueva la marca de actividad si la petición no es polling
         # automático ni un asset estático. Si no, la sesión nunca expiraría.
         if request.endpoint not in ENDPOINTS_NO_RENUEVAN_SESION:
             session['_last_activity'] = ahora.isoformat()
@@ -652,10 +652,9 @@ def calcular_siglas(nombre: str) -> str:
     hasta un máximo de 4 caracteres. Si el nombre es una sola palabra,
     devuelve los 4 primeros caracteres en mayúsculas.
     Ejemplos:
-      'Redes Locales'                → 'RL'
-      'Sistemas Informáticos'        → 'SI'
-      'Administración de Sistemas'   → 'AS'
-      'FOL'                          → 'FOL'
+      'Servicios de Red e Internet'             → 'SRI'
+      'Seguridad y Alta Disponibilidad'         → 'SAD'
+      'Administración de Sistemas Operativos'   → 'ASO'
     """
     PALABRAS_IGNORADAS = {'de', 'del', 'la', 'el', 'los', 'las', 'y', 'en', 'a', 'o'}
     palabras = nombre.strip().split()
@@ -810,7 +809,7 @@ def login():
 
         # ── Timing uniforme (anti-enumeración de usuarios) ──────────────────
         # bcrypt.check_password_hash tarda ~100ms. Si el usuario no existe,
-        # comparamos contra un hash ficticio REAL (no una cadena vacía) para
+        # se compara contra un hash ficticio REAL (no una cadena vacía) para
         # que el tiempo de respuesta sea idéntico y no sea posible distinguir
         # "usuario no existe" de "contraseña incorrecta" por diferencia de tiempo.
         HASH_FICTICIO = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMeJf36/FeZyB3e4eTudBVZqa.'
@@ -1086,7 +1085,7 @@ def escanear():
         conexion = conectar_db()
         cursor   = conexion.cursor()
 
-        # Volvemos a leer el horario activo: la conexión anterior ya está
+        # Se vuelve a leer el horario activo: la conexión anterior ya está
         # cerrada y entre tanto el usuario podría haber cambiado el override.
         horario_activo = obtener_horario_activo(cursor)
         id_horario     = horario_activo['id_horario'] if horario_activo else None
@@ -1129,8 +1128,6 @@ def escanear():
             nuevo_estado = 'PRESENTE' if esta_presente else 'AUSENTE'
 
             # Una sola fila por (alumno, horario, fecha).
-            # Si ya existe: solo cambia a PRESENTE si es que el alumno
-            # llega tarde; nunca degrada de PRESENTE a AUSENTE.
             cursor.execute(
                 """
                 INSERT INTO asistencia (id_alumno, id_horario, fecha, hora_registro, estado)
@@ -1722,7 +1719,7 @@ def delete_horario(id_horario):
 
 
 # =============================================================================
-# GESTIÓN DE USUARIOS (solo admin) — ahora con edición completa
+# GESTIÓN DE USUARIOS (solo admin)
 # =============================================================================
 
 @app.route('/usuarios')
@@ -2152,9 +2149,6 @@ def toggle_escaneo():
     conexion.commit()
     conexion.close()
     return jsonify({"status": "ok", "escaneo": 'pausado' if pausado else 'activo'})
-
-
-# (Exportación CSV eliminada — los informes HTML son el canal oficial de exportación)
 
 
 # =============================================================================

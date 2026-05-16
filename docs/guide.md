@@ -17,8 +17,9 @@
 8. [Notificaciones por correo](#8-notificaciones-por-correo)
 9. [Operación diaria](#9-operación-diaria)
 10. [Backups y restauración](#10-backups-y-restauración)
-11. [Actualización del sistema](#11-actualización-del-sistema)
-12. [Resolución de problemas](#12-resolución-de-problemas)
+11. [Rotación de logs (logrotate)](#11-rotación-de-logs-logrotate)
+12. [Actualización del sistema](#12-actualización-del-sistema)
+13. [Resolución de problemas](#13-resolución-de-problemas)
 
 ---
 
@@ -249,35 +250,73 @@ Desde el dashboard → botón **Pausar escaneo**. Los escaneos del scheduler seg
 
 ## 10. Backups y restauración
 
-### Hacer un backup
+### Hacer un backup manual
 
 ```bash
-# Backup con timestamp automático
 ./scripts/backup.sh
 ```
 
-El dump queda en `./backups/` comprimido con gzip.
+El dump queda en `/backups/bats/` con el formato `backup_YYYYMMDD_HHMMSS.sql.gz`, comprimido con gzip y con permisos 600. Se conservan los últimos 30 días automáticamente.
 
-### Programar backups automáticos (opcional)
+### Programar backups automáticos ⚠️ paso manual en el host
 
-Añadir al crontab del host:
+El script `instalar_cron_backup.sh` configura el cron, crea los directorios necesarios y da permisos en un solo paso:
 
 ```bash
-# Backup diario a las 2:00 de la madrugada
-0 2 * * * /ruta/al/proyecto/scripts/backup.sh >> /var/log/bats/backup.log 2>&1
+sudo ./scripts/instalar_cron_backup.sh
+```
+
+Esto añade al crontab de root:
+```
+0 3 * * * /ruta/al/proyecto/scripts/backup.sh >> /var/log/bats/backup.log 2>&1
+```
+
+Y crea los directorios `/backups/bats/` y `/var/log/bats/` si no existen.
+
+Para verificar que quedó instalado:
+```bash
+sudo crontab -l
 ```
 
 ### Restaurar desde un backup
 
 ```bash
-./scripts/restaurar.sh ./backups/bats_2025-11-15_02-00.sql.gz
+# Listar backups disponibles
+ls -lh /backups/bats/
+
+# Restaurar (pide confirmación interactiva)
+./scripts/restaurar.sh /backups/bats/backup_20260510_030001.sql.gz
+
+# Restaurar sin confirmación (para scripts)
+./scripts/restaurar.sh /backups/bats/backup_20260510_030001.sql.gz --sin-confirmacion
 ```
+
+> **Nota:** Antes de restaurar, el script hace automáticamente un backup de seguridad en `/backups/bats/pre_restauracion_*.sql.gz`.
 
 Ver el plan completo de recuperación ante desastres en [`DRP.md`](DRP.md).
 
 ---
 
-## 11. Actualización del sistema
+## 11. Rotación de logs (logrotate)
+
+⚠️ **Paso manual en el host.** Los logs del backup (`/var/log/bats/backup.log`) se rotan con logrotate, que es una herramienta del sistema operativo y no forma parte de Docker.
+
+```bash
+# Instalar la configuración de logrotate
+sudo cp logrotate.conf /etc/logrotate.d/bats
+
+# Logrotate se ejecuta automáticamente cada noche vía cron del sistema.
+# Para probar manualmente:
+sudo logrotate -f /etc/logrotate.d/bats
+```
+
+La configuración mantiene 14 días de histórico, comprime los ficheros rotados y no falla si el log no existe todavía.
+
+> **Nota:** Los logs de la aplicación (`./logs/app.log`, `./logs/cron.log`, `./logs/informe.log`) los gestiona Python internamente con `RotatingFileHandler` y no necesitan logrotate.
+
+---
+
+## 12. Actualización del sistema
 
 ```bash
 # Descargar cambios
@@ -296,7 +335,7 @@ docker compose exec db mariadb -u root -p${MYSQL_ROOT_PASSWORD} control_asistenc
 
 ---
 
-## 12. Resolución de problemas
+## 13. Resolución de problemas
 
 ### El adaptador Bluetooth no responde
 

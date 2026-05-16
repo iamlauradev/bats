@@ -7,9 +7,6 @@
 <div style="display:flex;align-items:center;justify-content:center;min-height:65vh;padding:24px;">
     <div style="text-align:center;max-width:560px;width:100%;">
 
-        {# Imagen del Monarca de las Sombras + los tres gatos guardianes.
-           Si el archivo no existe (o aún no lo has subido), mostramos un
-           placeholder con el mismo tamaño para que la maquetación no salte. #}
         <div style="position:relative;display:flex;justify-content:center;
                     margin-bottom:14px;">
             <img src="{{ url_for('static', filename='img/403.png') }}"
@@ -52,19 +49,19 @@
         <p style="font-family:'Rajdhani',system-ui,sans-serif;
                   font-size:15px;color:var(--tx1);margin-bottom:14px;line-height:1.65;
                   max-width:480px;margin-left:auto;margin-right:auto;">
-            El Monarca de las Sombras te observa desde el umbral.
+            El Monarca de las Sombras te observa desde el umbral de acceso.
             Tu rango actual,
             <span style="color:#c89bff;font-weight:700;font-family:'Share Tech Mono',monospace;
                          text-shadow:0 0 8px rgba(141,84,255,0.4);">
                 [{{ current_user.label_rol | upper }}]
             </span>
-            no basta para poder cruzar este portal.
+            no es suficiente para poder cruzar este portal.
         </p>
 
         <p style="font-family:'Rajdhani',system-ui,sans-serif;
                   font-size:14px;color:var(--tx2);margin-bottom:28px;
                   line-height:1.6;max-width:480px;margin-left:auto;margin-right:auto;">
-            Sólo administradores y tutores pueden adentrarse en esta zona.
+            Sólo administradores (y puede que tutores) pueden adentrarse aquí.
             Si crees que tu rango no es el correcto, habla con quien posea
             las llaves del sistema.
         </p>
